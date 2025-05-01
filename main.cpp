@@ -29,7 +29,7 @@ out vec4 finalColor;
 
 void main()
 {
-    finalColor = vec4(fragColor*0.5, 1.0);
+    finalColor = vec4(fragColor, 1.0);
 }
 )";
 
@@ -208,9 +208,9 @@ void setup_vao(void)
 void update_matrices(void)
 {
     // Calculate view matrix from camera
-    custom_math::vector_3 eye = main_camera.eye;
-    custom_math::vector_3 center = main_camera.eye + main_camera.look_at;
-    custom_math::vector_3 up = main_camera.up;
+    vec3 eye = main_camera.eye;
+    vec3 center = main_camera.eye + main_camera.look_at;
+    vec3 up = main_camera.up;
 
     view_matrix = glm::lookAt(
         glm::vec3(eye.x, eye.y, eye.z),
@@ -257,7 +257,7 @@ void init_opengl(const int& width, const int& height)
     glClearColor((float)background_colour.x, (float)background_colour.y, (float)background_colour.z, 1);
     glClearDepth(1.0f);
 
-    main_camera.Set(0, 0, camera_w, camera_fov, win_x, win_y, camera_near, camera_far);
+    main_camera.calculate_camera_matrices(win_x, win_y);
 }
 
 void reshape_func(int width, int height)
@@ -275,7 +275,7 @@ void reshape_func(int width, int height)
     glutReshapeWindow(win_x, win_y);
     glViewport(0, 0, win_x, win_y);
 
-    main_camera.Set(main_camera.u, main_camera.v, main_camera.w, main_camera.fov, win_x, win_y, camera_near, camera_far);
+    main_camera.calculate_camera_matrices(win_x, win_y);
 }
 
 // Text drawing code originally from "GLUT Tutorial -- Bitmap Fonts and Orthogonal Projections" by A R Fernandes
@@ -380,9 +380,8 @@ void display_func(void)
         render_string(10, static_cast<int>(start + 9 * break_size), GLUT_BITMAP_HELVETICA_18, string("  o: Rotate camera +v"));
         render_string(10, static_cast<int>(start + 10 * break_size), GLUT_BITMAP_HELVETICA_18, string("  p: Rotate camera -v"));
 
-        custom_math::vector_3 eye = main_camera.eye;
-        custom_math::vector_3 eye_norm = eye;
-        eye_norm.normalize();
+        vec3 eye = main_camera.eye;
+        vec3 eye_norm = normalize(eye);
 
         oss.clear();
         oss.str("");
@@ -416,25 +415,25 @@ void keyboard_func(unsigned char key, int x, int y)
     case 'u':
     {
         main_camera.u -= u_spacer;
-        main_camera.Set();
+        main_camera.calculate_camera_matrices(win_x, win_y);
         break;
     }
     case 'i':
     {
         main_camera.u += u_spacer;
-        main_camera.Set();
+        main_camera.calculate_camera_matrices(win_x, win_y);
         break;
     }
     case 'o':
     {
         main_camera.v -= v_spacer;
-        main_camera.Set();
+        main_camera.calculate_camera_matrices(win_x, win_y);
         break;
     }
     case 'p':
     {
         main_camera.v += v_spacer;
-        main_camera.Set();
+        main_camera.calculate_camera_matrices(win_x, win_y);
         break;
     }
     default:
@@ -491,7 +490,7 @@ void motion_func(int x, int y)
             main_camera.w = 1.1f;
     }
 
-    main_camera.Set(); // Calculate new camera vectors.
+    main_camera.calculate_camera_matrices(win_x, win_y);
 }
 
 void passive_motion_func(int x, int y)
