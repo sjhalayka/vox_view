@@ -29,7 +29,7 @@ out vec4 finalColor;
 
 void main()
 {
-    finalColor = vec4(fragColor, 1.0);
+    finalColor = vec4(fragColor*0.5, 1.0);
 }
 )";
 
@@ -74,8 +74,6 @@ int main(int argc, char** argv)
     read_quads_from_vox_file("chr_knight.vox", tri_vec);
 
     glutInit(&argc, argv);
-    //glutInitContextVersion(4, 3); // Request OpenGL 4.3 context
-    //glutInitContextProfile(GLUT_CORE_PROFILE); // Core profile
     init_opengl(win_x, win_y);
 
     // Initialize GLEW after GLUT and context creation
@@ -174,17 +172,17 @@ void setup_vao(void)
     float axis_vertices[] = {
         // Position (x,y,z)     // Color (r,g,b)
         0.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis start (red)
-        1.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis end
+        10.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis end
         0.0f, 0.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis start (green)
-        0.0f, 1.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis end
+        0.0f, 10.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis end
         0.0f, 0.0f, 0.0f,      0.0f, 0.0f, 1.0f,  // z-axis start (blue)
-        0.0f, 0.0f, 1.0f,      0.0f, 0.0f, 1.0f,  // z-axis end
+        0.0f, 0.0f, 10.0f,      0.0f, 0.0f, 1.0f,  // z-axis end
         0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -x-axis start (gray)
-        -1.0f, 0.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -x-axis end
+        -10.0f, 0.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -x-axis end
         0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -y-axis start
-        0.0f, -1.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -y-axis end
+        0.0f, -10.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -y-axis end
         0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -z-axis start
-        0.0f, 0.0f, -1.0f,     0.5f, 0.5f, 0.5f   // -z-axis end
+        0.0f, 0.0f, -10.0f,     0.5f, 0.5f, 0.5f   // -z-axis end
     };
 
     // Generate axis VAO and VBO
@@ -206,7 +204,7 @@ void setup_vao(void)
     // Unbind axis VAO
     glBindVertexArray(0);
 }
-
+    
 void update_matrices(void)
 {
     // Calculate view matrix from camera
