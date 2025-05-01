@@ -5,7 +5,7 @@
 #include "custom_math.h"
 #include "ogt_vox.h"
 #include "ogt_voxel_meshify.h"
-
+#include "glm/glm.hpp"
 
 #include <cstdlib>
 #include <GL/glut.h>       //GLUT Library
@@ -76,8 +76,8 @@ float camera_y_transform = 0;
 float u_spacer = 0.01f;
 float v_spacer = 0.5f*u_spacer;
 float w_spacer = 0.1f;
-float camera_near = 0.01;
-float camera_far = 100.0;
+float camera_near = 0.01f;
+float camera_far = 100.0f;
 
 bool lmb_down = false;
 bool mmb_down = false;
@@ -88,7 +88,52 @@ int mouse_y = 0;
 
 
 vector<custom_math::triangle> tri_vec;
+custom_math::vertex_3 min_location, max_location;
+glm::mat4 model_matrix(1.0);
 
+
+
+void calc_AABB_min_max_locations(void)
+{
+	float x_min = numeric_limits<float>::max();
+	float y_min = numeric_limits<float>::max();
+	float z_min = numeric_limits<float>::max();
+	float x_max = -numeric_limits<float>::max();
+	float y_max = -numeric_limits<float>::max();
+	float z_max = -numeric_limits<float>::max();
+
+	for (size_t t = 0; t < tri_vec.size(); t++)
+	{
+		for (size_t j = 0; j < 3; j++)
+		{
+			if (tri_vec[t].vertex[j].x < x_min)
+				x_min = tri_vec[t].vertex[j].x;
+
+			if (tri_vec[t].vertex[j].x > x_max)
+				x_max = tri_vec[t].vertex[j].x;
+
+			if (tri_vec[t].vertex[j].y < y_min)
+				y_min = tri_vec[t].vertex[j].y;
+
+			if (tri_vec[t].vertex[j].y > y_max)
+				y_max = tri_vec[t].vertex[j].y;
+
+			if (tri_vec[t].vertex[j].z < z_min)
+				z_min = tri_vec[t].vertex[j].z;
+
+			if (tri_vec[t].vertex[j].z > z_max)
+				z_max = tri_vec[t].vertex[j].z;
+		}
+	}
+
+	min_location.x = x_min;
+	min_location.y = y_min;
+	min_location.z = z_min;
+
+	max_location.x = x_max;
+	max_location.y = y_max;
+	max_location.z = z_max;
+}
 
 
 void centre_mesh_on_xyz(void)
@@ -500,10 +545,22 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 	centre_mesh_on_xyz();
 
+	for (size_t i = 0; i < tri_vec.size(); i++)
+	{
+		static const float pi = 4.0f * atanf(1.0f);
+
+		tri_vec[i].vertex[0].rotate_x(pi - pi / 2.0f);
+		tri_vec[i].vertex[1].rotate_x(pi - pi / 2.0f);
+		tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
+	}
+
+	calc_AABB_min_max_locations();
 
 
 	return true;
 }
+
+
 
 
 

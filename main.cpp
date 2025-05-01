@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 
 	read_quads_from_vox_file("chr_knight.vox", tri_vec);
 
-	write_triangles_to_binary_stereo_lithography_file(tri_vec, "out.stl");
+	//write_triangles_to_binary_stereo_lithography_file(tri_vec, "out.stl");
 
 	glutInit(&argc, argv);
 	init_opengl(win_x, win_y);
