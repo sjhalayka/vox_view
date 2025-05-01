@@ -1,357 +1,517 @@
 #include "main.h"
+#include "shader_utils.h"
 
+// Shader source code
+const char* vertexShaderSource = R"(
+#version 430 core
 
-int main(int argc, char **argv)
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 color;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+out vec3 fragColor;
+
+void main()
 {
-	cout << setprecision(20) << endl;
+    fragColor = color;
+    gl_Position = projection * view * model * vec4(position, 1.0);
+}
+)";
 
+const char* fragmentShaderSource = R"(
+#version 430 core
 
+in vec3 fragColor;
+out vec4 finalColor;
 
-	read_quads_from_vox_file("chr_knight.vox", tri_vec);
+void main()
+{
+    finalColor = vec4(fragColor, 1.0);
+}
+)";
 
-	//write_triangles_to_binary_stereo_lithography_file(tri_vec, "out.stl");
+// Axis shader source code
+const char* axisVertexShaderSource = R"(
+#version 430 core
 
-	glutInit(&argc, argv);
-	init_opengl(win_x, win_y);
-	glutReshapeFunc(reshape_func);
-	glutIdleFunc(idle_func);
-	glutDisplayFunc(display_func);
-	glutKeyboardFunc(keyboard_func);
-	glutMouseFunc(mouse_func);
-	glutMotionFunc(motion_func);
-	glutPassiveMotionFunc(passive_motion_func);
-	//glutIgnoreKeyRepeat(1);
-	glutMainLoop();
-	glutDestroyWindow(win_id);
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 color;
 
-	return 0;
+uniform mat4 view;
+uniform mat4 projection;
+
+out vec3 fragColor;
+
+void main()
+{
+    fragColor = color;
+    gl_Position = projection * view * vec4(position, 1.0);
+}
+)";
+
+const char* axisFragmentShaderSource = R"(
+#version 430 core
+
+in vec3 fragColor;
+out vec4 finalColor;
+
+void main()
+{
+    finalColor = vec4(fragColor, 1.0);
+}
+)";
+
+// OpenGL 4 variables
+GLuint axis_shader_program = 0;
+
+int main(int argc, char** argv)
+{
+    cout << setprecision(20) << endl;
+
+    read_quads_from_vox_file("chr_knight.vox", tri_vec);
+
+    glutInit(&argc, argv);
+    //glutInitContextVersion(4, 3); // Request OpenGL 4.3 context
+    //glutInitContextProfile(GLUT_CORE_PROFILE); // Core profile
+    init_opengl(win_x, win_y);
+
+    // Initialize GLEW after GLUT and context creation
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        cerr << "Error: " << glewGetErrorString(err) << endl;
+        return 1;
+    }
+
+    // Setup OpenGL 4 objects
+    init_shaders();
+    setup_vao();
+
+    glutReshapeFunc(reshape_func);
+    glutIdleFunc(idle_func);
+    glutDisplayFunc(display_func);
+    glutKeyboardFunc(keyboard_func);
+    glutMouseFunc(mouse_func);
+    glutMotionFunc(motion_func);
+    glutPassiveMotionFunc(passive_motion_func);
+//    glutCloseFunc(cleanup);
+
+    glutMainLoop();
+
+    return 0;
 }
 
+void init_shaders(void)
+{
+    // Create the main shader program
+    shader_program = createShaderProgram(vertexShaderSource, fragmentShaderSource);
 
+    // Get uniform locations
+    model_loc = glGetUniformLocation(shader_program, "model");
+    view_loc = glGetUniformLocation(shader_program, "view");
+    proj_loc = glGetUniformLocation(shader_program, "projection");
+
+    // Create the axis shader program
+    axis_shader_program = createShaderProgram(axisVertexShaderSource, axisFragmentShaderSource);
+}
+
+void setup_vao(void)
+{
+    // Create buffers for the main mesh
+    std::vector<Vertex> vertices;
+    std::vector<GLuint> indices;
+
+    // Convert triangle data to buffers
+    size_t index_offset = 0;
+    for (size_t i = 0; i < tri_vec.size(); i++) {
+        for (size_t j = 0; j < 3; j++) {
+            Vertex vertex;
+            vertex.position[0] = tri_vec[i].vertex[j].x;
+            vertex.position[1] = tri_vec[i].vertex[j].y;
+            vertex.position[2] = tri_vec[i].vertex[j].z;
+            vertex.color[0] = tri_vec[i].colour.x;
+            vertex.color[1] = tri_vec[i].colour.y;
+            vertex.color[2] = tri_vec[i].colour.z;
+            vertices.push_back(vertex);
+        }
+
+        // Add indices for triangle
+        indices.push_back(index_offset);
+        indices.push_back(index_offset + 1);
+        indices.push_back(index_offset + 2);
+        index_offset += 3;
+    }
+
+    // Create and bind the main VAO
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Create and bind the VBO
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+    // Create and bind the EBO
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+    // Set attribute pointers
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Unbind VAO
+    glBindVertexArray(0);
+
+    // Setup axis VAO
+    float axis_vertices[] = {
+        // Position (x,y,z)     // Color (r,g,b)
+        0.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis start (red)
+        1.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis end
+        0.0f, 0.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis start (green)
+        0.0f, 1.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis end
+        0.0f, 0.0f, 0.0f,      0.0f, 0.0f, 1.0f,  // z-axis start (blue)
+        0.0f, 0.0f, 1.0f,      0.0f, 0.0f, 1.0f,  // z-axis end
+        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -x-axis start (gray)
+        -1.0f, 0.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -x-axis end
+        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -y-axis start
+        0.0f, -1.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -y-axis end
+        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -z-axis start
+        0.0f, 0.0f, -1.0f,     0.5f, 0.5f, 0.5f   // -z-axis end
+    };
+
+    // Generate axis VAO and VBO
+    glGenVertexArrays(1, &axis_vao);
+    glBindVertexArray(axis_vao);
+
+    glGenBuffers(1, &axis_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axis_vertices), axis_vertices, GL_STATIC_DRAW);
+
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Unbind axis VAO
+    glBindVertexArray(0);
+}
+
+void update_matrices(void)
+{
+    // Calculate view matrix from camera
+    custom_math::vector_3 eye = main_camera.eye;
+    custom_math::vector_3 center = main_camera.eye + main_camera.look_at;
+    custom_math::vector_3 up = main_camera.up;
+
+    view_matrix = glm::lookAt(
+        glm::vec3(eye.x, eye.y, eye.z),
+        glm::vec3(center.x, center.y, center.z),
+        glm::vec3(up.x, up.y, up.z)
+    );
+
+    // Calculate projection matrix
+    projection_matrix = glm::perspective(
+        glm::radians(main_camera.fov),
+        (float)win_x / (float)win_y,
+        camera_near,
+        camera_far
+    );
+}
 
 void idle_func(void)
 {
-	const double dt = 10000; // 10000 seconds == 2.77777 hours
-
     glutPostRedisplay();
 }
 
-void init_opengl(const int &width, const int &height)
+void init_opengl(const int& width, const int& height)
 {
-	win_x = width;
-	win_y = height;
+    win_x = width;
+    win_y = height;
 
-	if(win_x < 1)
-		win_x = 1;
+    if (win_x < 1)
+        win_x = 1;
 
-	if(win_y < 1)
-		win_y = 1;
+    if (win_y < 1)
+        win_y = 1;
 
-	glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
-	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(win_x, win_y);
-	win_id = glutCreateWindow("orbit");
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowPosition(0, 0);
+    glutInitWindowSize(win_x, win_y);
+    win_id = glutCreateWindow("OpenGL 4 Mesh Viewer");
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_TRUE);
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
-	glClearColor((float)background_colour.x, (float)background_colour.y, (float)background_colour.z, 1);
-	glClearDepth(1.0f);
+    glClearColor((float)background_colour.x, (float)background_colour.y, (float)background_colour.z, 1);
+    glClearDepth(1.0f);
 
-	main_camera.Set(0, 0, camera_w, camera_fov, win_x, win_y, camera_near, camera_far);
+    main_camera.Set(0, 0, camera_w, camera_fov, win_x, win_y, camera_near, camera_far);
 }
 
 void reshape_func(int width, int height)
 {
-	win_x = width;
-	win_y = height;
+    win_x = width;
+    win_y = height;
 
-	if(win_x < 1)
-		win_x = 1;
+    if (win_x < 1)
+        win_x = 1;
 
-	if(win_y < 1)
-		win_y = 1;
+    if (win_y < 1)
+        win_y = 1;
 
-	glutSetWindow(win_id);
-	glutReshapeWindow(win_x, win_y);
-	glViewport(0, 0, win_x, win_y);
+    glutSetWindow(win_id);
+    glutReshapeWindow(win_x, win_y);
+    glViewport(0, 0, win_x, win_y);
 
-	main_camera.Set(main_camera.u, main_camera.v, main_camera.w, main_camera.fov, win_x, win_y, camera_near, camera_far);
+    main_camera.Set(main_camera.u, main_camera.v, main_camera.w, main_camera.fov, win_x, win_y, camera_near, camera_far);
 }
 
 // Text drawing code originally from "GLUT Tutorial -- Bitmap Fonts and Orthogonal Projections" by A R Fernandes
-void render_string(int x, const int y, void *font, const string &text)
+void render_string(int x, const int y, void* font, const string& text)
 {
-	for(size_t i = 0; i < text.length(); i++)
-	{
-		glRasterPos2i(x, y);
-		glutBitmapCharacter(font, text[i]);
-		x += glutBitmapWidth(font, text[i]) + 1;
-	}
+    glUseProgram(0); // Disable shaders for GLUT text rendering
+
+    // Setup orthographic projection for text rendering
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, win_x, 0, win_y);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glDisable(GL_DEPTH_TEST);
+
+    for (size_t i = 0; i < text.length(); i++)
+    {
+        glRasterPos2i(x, y);
+        glutBitmapCharacter(font, text[i]);
+        x += glutBitmapWidth(font, text[i]) + 1;
+    }
+
+    glEnable(GL_DEPTH_TEST);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
 }
-// End text drawing code.
 
 void draw_objects(void)
 {
-    glDisable(GL_LIGHTING);
-    
-	glPushMatrix();
-  
+    // Update matrices based on camera
+    update_matrices();
 
-    glPointSize(2.0);
-    glLineWidth(1.0f);
+    // Draw the model using modern OpenGL
+    glUseProgram(shader_program);
 
-	glBegin(GL_TRIANGLES);
+    // Set uniforms
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_matrix));
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
-	for (size_t i = 0; i < tri_vec.size(); i++)
-	{
-		glColor3f(tri_vec[i].colour.x, tri_vec[i].colour.y, tri_vec[i].colour.z);
+    // Draw the mesh
+    glBindVertexArray(vao);
+    glDrawElements(GL_TRIANGLES, tri_vec.size() * 3, GL_UNSIGNED_INT, 0);
 
-		glVertex3f(tri_vec[i].vertex[0].x, tri_vec[i].vertex[0].y, tri_vec[i].vertex[0].z);
-		glVertex3f(tri_vec[i].vertex[1].x, tri_vec[i].vertex[1].y, tri_vec[i].vertex[1].z);
-		glVertex3f(tri_vec[i].vertex[2].x, tri_vec[i].vertex[2].y, tri_vec[i].vertex[2].z);
+    // Draw coordinate axes if enabled
+    if (draw_axis)
+    {
+        glUseProgram(axis_shader_program);
 
-	}
+        // Set uniforms for axis shader
+        GLint axis_view_loc = glGetUniformLocation(axis_shader_program, "view");
+        GLint axis_proj_loc = glGetUniformLocation(axis_shader_program, "projection");
 
-	glEnd();
+        glUniformMatrix4fv(axis_view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+        glUniformMatrix4fv(axis_proj_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
+        glBindVertexArray(axis_vao);
+        glDrawArrays(GL_LINES, 0, 12); // 6 axes, 2 points each
+    }
 
-	//glBegin(GL_QUADS);
-
-	//for (size_t i = 0; i < quad_vec.size(); i++)
-	//{
-	//	glColor3f(quad_vec[i].colour.x, quad_vec[i].colour.y, quad_vec[i].colour.z);
-
-	//	glVertex3f(quad_vec[i].vertex[0].x, quad_vec[i].vertex[0].y, quad_vec[i].vertex[0].z);
-	//	glVertex3f(quad_vec[i].vertex[1].x, quad_vec[i].vertex[1].y, quad_vec[i].vertex[1].z);
-	//	glVertex3f(quad_vec[i].vertex[2].x, quad_vec[i].vertex[2].y, quad_vec[i].vertex[2].z);
-	//	glVertex3f(quad_vec[i].vertex[3].x, quad_vec[i].vertex[3].y, quad_vec[i].vertex[3].z);
-
-	//}
-
-	//glEnd();
-    
- /*   glBegin(GL_POINTS);
-    glVertex3d(sun_pos.x, sun_pos.y, sun_pos.z);
-    
-    glColor3f(1.0, 1.0, 1.0);
-    
-    for(size_t i = 0; i < positions.size(); i++)
-    glVertex3d(positions[i].x, positions[i].y, positions[i].z);
-    
-    glEnd();
- */   
-    
-    
-    
-    
-    glLineWidth(1.0f);
-    
-    
-	// If we do draw the axis at all, make sure not to draw its outline.
-	if(true == draw_axis)
-	{
-		glBegin(GL_LINES);
-
-		glColor3f(1, 0, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(1, 0, 0);
-		glColor3f(0, 1, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, 1, 0);
-		glColor3f(0, 0, 1);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, 0, 1);
-
-		glColor3f(0.5, 0.5, 0.5);
-		glVertex3f(0, 0, 0);
-		glVertex3f(-1, 0, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, -1, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, 0, -1);
-
-		glEnd();
-	}
-
-	glPopMatrix();
+    // Reset state
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
-
-
-
 
 void display_func(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Draw the model's components using OpenGL/GLUT primitives.
-	draw_objects();
+    // Draw objects using modern OpenGL
+    draw_objects();
 
-	if(true == draw_control_list)
-	{
-		// Text drawing code originally from "GLUT Tutorial -- Bitmap Fonts and Orthogonal Projections" by A R Fernandes
-		// http://www.lighthouse3d.com/opengl/glut/index.php?bmpfontortho
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		gluOrtho2D(0, win_x, 0, win_y);
-		glScaled(1, -1, 1); // Neat. :)
-		glTranslated(0, -win_y, 0); // Neat. :)
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+    // Draw UI text if enabled
+    if (true == draw_control_list)
+    {
+        // Set text color
+        glColor3d(control_list_colour.x, control_list_colour.y, control_list_colour.z);
 
-		glColor3d(control_list_colour.x, control_list_colour.y, control_list_colour.z);
+        size_t break_size = 22;
+        size_t start = 20;
+        ostringstream oss;
 
-		size_t break_size = 22;
-		size_t start = 20;
-		ostringstream oss;
+        render_string(10, static_cast<int>(start), GLUT_BITMAP_HELVETICA_18, string("Mouse controls:"));
+        render_string(10, static_cast<int>(start + 1 * break_size), GLUT_BITMAP_HELVETICA_18, string("  LMB + drag: Rotate camera"));
+        render_string(10, static_cast<int>(start + 2 * break_size), GLUT_BITMAP_HELVETICA_18, string("  RMB + drag: Zoom camera"));
 
-		render_string(10, static_cast<int>(start), GLUT_BITMAP_HELVETICA_18, string("Mouse controls:"));
-		render_string(10, static_cast<int>(start + 1*break_size), GLUT_BITMAP_HELVETICA_18, string("  LMB + drag: Rotate camera"));
-		render_string(10, static_cast<int>(start + 2*break_size), GLUT_BITMAP_HELVETICA_18, string("  RMB + drag: Zoom camera"));
+        render_string(10, static_cast<int>(start + 4 * break_size), GLUT_BITMAP_HELVETICA_18, string("Keyboard controls:"));
+        render_string(10, static_cast<int>(start + 5 * break_size), GLUT_BITMAP_HELVETICA_18, string("  w: Draw axis"));
+        render_string(10, static_cast<int>(start + 6 * break_size), GLUT_BITMAP_HELVETICA_18, string("  e: Draw text"));
+        render_string(10, static_cast<int>(start + 7 * break_size), GLUT_BITMAP_HELVETICA_18, string("  u: Rotate camera +u"));
+        render_string(10, static_cast<int>(start + 8 * break_size), GLUT_BITMAP_HELVETICA_18, string("  i: Rotate camera -u"));
+        render_string(10, static_cast<int>(start + 9 * break_size), GLUT_BITMAP_HELVETICA_18, string("  o: Rotate camera +v"));
+        render_string(10, static_cast<int>(start + 10 * break_size), GLUT_BITMAP_HELVETICA_18, string("  p: Rotate camera -v"));
 
-		render_string(10, static_cast<int>(start + 4*break_size), GLUT_BITMAP_HELVETICA_18, string("Keyboard controls:"));
-        render_string(10, static_cast<int>(start + 5*break_size), GLUT_BITMAP_HELVETICA_18, string("  w: Draw axis"));
-		render_string(10, static_cast<int>(start + 6*break_size), GLUT_BITMAP_HELVETICA_18, string("  e: Draw text"));
-		render_string(10, static_cast<int>(start + 7*break_size), GLUT_BITMAP_HELVETICA_18, string("  u: Rotate camera +u"));
-		render_string(10, static_cast<int>(start + 8*break_size), GLUT_BITMAP_HELVETICA_18, string("  i: Rotate camera -u"));
-		render_string(10, static_cast<int>(start + 9*break_size), GLUT_BITMAP_HELVETICA_18, string("  o: Rotate camera +v"));
-		render_string(10, static_cast<int>(start + 10*break_size), GLUT_BITMAP_HELVETICA_18, string("  p: Rotate camera -v"));
-
-
-		
         custom_math::vector_3 eye = main_camera.eye;
-		custom_math::vector_3 eye_norm = eye;
-		eye_norm.normalize();
+        custom_math::vector_3 eye_norm = eye;
+        eye_norm.normalize();
 
-		oss.clear();
-		oss.str("");		
-		oss << "Camera position: " << eye.x << ' ' << eye.y << ' ' << eye.z;
-		render_string(10, static_cast<int>(win_y - 2*break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
+        oss.clear();
+        oss.str("");
+        oss << "Camera position: " << eye.x << ' ' << eye.y << ' ' << eye.z;
+        render_string(10, static_cast<int>(win_y - 2 * break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
 
-		oss.clear();
-		oss.str("");
-		oss << "Camera position (normalized): " << eye_norm.x << ' ' << eye_norm.y << ' ' << eye_norm.z;
-		render_string(10, static_cast<int>(win_y - break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
+        oss.clear();
+        oss.str("");
+        oss << "Camera position (normalized): " << eye_norm.x << ' ' << eye_norm.y << ' ' << eye_norm.z;
+        render_string(10, static_cast<int>(win_y - break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
+    }
 
-		glPopMatrix();
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		// End text drawing code.
-	}
-
-	glFlush();
-	glutSwapBuffers();
+    glFlush();
+    glutSwapBuffers();
 }
 
 void keyboard_func(unsigned char key, int x, int y)
 {
-	switch(tolower(key))
-	{
-	case 'w':
-		{
-			draw_axis = !draw_axis;
-			break;
-		}
-	case 'e':
-		{
-			draw_control_list = !draw_control_list;
-			break;
-		}
-	case 'u':
-		{
-			main_camera.u -= u_spacer;
-			main_camera.Set();
-			break;
-		}
-	case 'i':
-		{
-			main_camera.u += u_spacer;
-			main_camera.Set();
-			break;
-		}
-	case 'o':
-		{
-			main_camera.v -= v_spacer;
-			main_camera.Set();
-			break;
-		}
-	case 'p':
-		{
-			main_camera.v += v_spacer;
-			main_camera.Set();
-			break;
-		}
-
-	default:
-		break;
-	}
+    switch (tolower(key))
+    {
+    case 'w':
+    {
+        draw_axis = !draw_axis;
+        break;
+    }
+    case 'e':
+    {
+        draw_control_list = !draw_control_list;
+        break;
+    }
+    case 'u':
+    {
+        main_camera.u -= u_spacer;
+        main_camera.Set();
+        break;
+    }
+    case 'i':
+    {
+        main_camera.u += u_spacer;
+        main_camera.Set();
+        break;
+    }
+    case 'o':
+    {
+        main_camera.v -= v_spacer;
+        main_camera.Set();
+        break;
+    }
+    case 'p':
+    {
+        main_camera.v += v_spacer;
+        main_camera.Set();
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void mouse_func(int button, int state, int x, int y)
 {
-	if(GLUT_LEFT_BUTTON == button)
-	{
-		if(GLUT_DOWN == state)
-			lmb_down = true;
-		else
-			lmb_down = false;
-	}
-	else if(GLUT_MIDDLE_BUTTON == button)
-	{
-		if(GLUT_DOWN == state)
-			mmb_down = true;
-		else
-			mmb_down = false;
-	}
-	else if(GLUT_RIGHT_BUTTON == button)
-	{
-		if(GLUT_DOWN == state)
-			rmb_down = true;
-		else
-			rmb_down = false;
-	}
+    if (GLUT_LEFT_BUTTON == button)
+    {
+        if (GLUT_DOWN == state)
+            lmb_down = true;
+        else
+            lmb_down = false;
+    }
+    else if (GLUT_MIDDLE_BUTTON == button)
+    {
+        if (GLUT_DOWN == state)
+            mmb_down = true;
+        else
+            mmb_down = false;
+    }
+    else if (GLUT_RIGHT_BUTTON == button)
+    {
+        if (GLUT_DOWN == state)
+            rmb_down = true;
+        else
+            rmb_down = false;
+    }
 }
 
 void motion_func(int x, int y)
 {
-	int prev_mouse_x = mouse_x;
-	int prev_mouse_y = mouse_y;
+    int prev_mouse_x = mouse_x;
+    int prev_mouse_y = mouse_y;
 
-	mouse_x = x;
-	mouse_y = y;
+    mouse_x = x;
+    mouse_y = y;
 
-	int mouse_delta_x = mouse_x - prev_mouse_x;
-	int mouse_delta_y = prev_mouse_y - mouse_y;
+    int mouse_delta_x = mouse_x - prev_mouse_x;
+    int mouse_delta_y = prev_mouse_y - mouse_y;
 
-	if(true == lmb_down && (0 != mouse_delta_x || 0 != mouse_delta_y))
-	{
-		main_camera.u -= static_cast<float>(mouse_delta_y)*u_spacer;
-		main_camera.v += static_cast<float>(mouse_delta_x)*v_spacer;
-	}
-	else if(true == rmb_down && (0 != mouse_delta_y))
-	{
-		main_camera.w -= static_cast<float>(mouse_delta_y)*w_spacer;
+    if (true == lmb_down && (0 != mouse_delta_x || 0 != mouse_delta_y))
+    {
+        main_camera.u -= static_cast<float>(mouse_delta_y) * u_spacer;
+        main_camera.v += static_cast<float>(mouse_delta_x) * v_spacer;
+    }
+    else if (true == rmb_down && (0 != mouse_delta_y))
+    {
+        main_camera.w -= static_cast<float>(mouse_delta_y) * w_spacer;
 
-		if(main_camera.w < 1.1f)
-			main_camera.w = 1.1f;
+        if (main_camera.w < 1.1f)
+            main_camera.w = 1.1f;
+    }
 
-	}
-
-	main_camera.Set(); // Calculate new camera vectors.
+    main_camera.Set(); // Calculate new camera vectors.
 }
 
 void passive_motion_func(int x, int y)
 {
-	mouse_x = x;
-	mouse_y = y;
+    mouse_x = x;
+    mouse_y = y;
 }
 
+void cleanup(void)
+{
+    // Delete OpenGL objects
+    glDeleteVertexArrays(1, &vao);
+    glDeleteVertexArrays(1, &axis_vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteBuffers(1, &axis_vbo);
+    glDeleteProgram(shader_program);
+    glDeleteProgram(axis_shader_program);
 
-
-
+    glutDestroyWindow(win_id);
+}
