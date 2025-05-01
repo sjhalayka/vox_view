@@ -73,7 +73,7 @@ void cleanup(void);
 // OpenGL 4 function prototypes
 void init_shaders(void);
 void setup_vao(void);
-void update_matrices(void);
+//void update_matrices(void);
 
 // Global variables
 custom_math::vector_3 background_colour(0.0f, 0.0f, 0.0f);
@@ -120,8 +120,8 @@ GLint proj_loc = 0;
 
 // Matrices
 glm::mat4 model_matrix = glm::mat4(1.0f);
-glm::mat4 view_matrix = glm::mat4(1.0f);
-glm::mat4 projection_matrix = glm::mat4(1.0f);
+//glm::mat4 view_matrix = glm::mat4(1.0f);
+//glm::mat4 projection_matrix = glm::mat4(1.0f);
 
 // Axis VAO and VBO
 GLuint axis_vao = 0;
@@ -311,7 +311,7 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
     infile.read(reinterpret_cast<char*>(&v[0]), file_size);
     infile.close();
 
-    const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], file_size);
+    const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
 
     for (size_t x = 0; x < scene->models[0]->size_x; x++)
     {

@@ -136,9 +136,9 @@ void setup_vao(void)
         }
 
         // Add indices for triangle
-        indices.push_back(index_offset);
-        indices.push_back(index_offset + 1);
-        indices.push_back(index_offset + 2);
+        indices.push_back(static_cast<GLuint>(index_offset));
+        indices.push_back(static_cast<GLuint>(index_offset + 1));
+        indices.push_back(static_cast<GLuint>(index_offset + 2));
         index_offset += 3;
     }
 
@@ -205,27 +205,6 @@ void setup_vao(void)
     glBindVertexArray(0);
 }
     
-void update_matrices(void)
-{
-    // Calculate view matrix from camera
-    vec3 eye = main_camera.eye;
-    vec3 center = main_camera.eye + main_camera.look_at;
-    vec3 up = main_camera.up;
-
-    view_matrix = glm::lookAt(
-        glm::vec3(eye.x, eye.y, eye.z),
-        glm::vec3(center.x, center.y, center.z),
-        glm::vec3(up.x, up.y, up.z)
-    );
-
-    // Calculate projection matrix
-    projection_matrix = glm::perspective(
-        glm::radians(main_camera.fov),
-        (float)win_x / (float)win_y,
-        camera_near,
-        camera_far
-    );
-}
 
 void idle_func(void)
 {
@@ -315,32 +294,28 @@ void render_string(int x, const int y, void* font, const string& text)
 
 void draw_objects(void)
 {
-    // Update matrices based on camera
-    update_matrices();
-
     // Draw the model using modern OpenGL
     glUseProgram(shader_program);
 
     // Set uniforms
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_matrix));
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
 
     // Draw the mesh
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, tri_vec.size() * 3, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(tri_vec.size() * 3), GL_UNSIGNED_INT, 0);
 
     // Draw coordinate axes if enabled
     if (draw_axis)
     {
         glUseProgram(axis_shader_program);
 
-        // Set uniforms for axis shader
         GLint axis_view_loc = glGetUniformLocation(axis_shader_program, "view");
         GLint axis_proj_loc = glGetUniformLocation(axis_shader_program, "projection");
 
-        glUniformMatrix4fv(axis_view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-        glUniformMatrix4fv(axis_proj_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+        glUniformMatrix4fv(axis_view_loc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
+        glUniformMatrix4fv(axis_proj_loc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
 
         glBindVertexArray(axis_vao);
         glDrawArrays(GL_LINES, 0, 12); // 6 axes, 2 points each
