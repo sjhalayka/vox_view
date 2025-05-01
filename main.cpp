@@ -297,6 +297,15 @@ void draw_objects(void)
     // Draw the model using modern OpenGL
     glUseProgram(shader_program);
 
+
+
+    model_matrix = mat4(1.0);
+
+    model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+
     // Set uniforms
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_matrix));
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
@@ -311,6 +320,7 @@ void draw_objects(void)
     {
         glUseProgram(axis_shader_program);
 
+        // Set uniforms for axis shader
         GLint axis_view_loc = glGetUniformLocation(axis_shader_program, "view");
         GLint axis_proj_loc = glGetUniformLocation(axis_shader_program, "projection");
 
@@ -387,30 +397,27 @@ void keyboard_func(unsigned char key, int x, int y)
         draw_control_list = !draw_control_list;
         break;
     }
-    case 'u':
-    {
-        main_camera.u -= u_spacer;
-        main_camera.calculate_camera_matrices(win_x, win_y);
-        break;
-    }
-    case 'i':
-    {
-        main_camera.u += u_spacer;
-        main_camera.calculate_camera_matrices(win_x, win_y);
-        break;
-    }
     case 'o':
     {
-        main_camera.v -= v_spacer;
-        main_camera.calculate_camera_matrices(win_x, win_y);
+        u += 0.1f;
         break;
     }
     case 'p':
     {
-        main_camera.v += v_spacer;
-        main_camera.calculate_camera_matrices(win_x, win_y);
+        u -= 0.1f;
         break;
     }
+    case 'k':
+    {
+        v += 0.1f;
+        break;
+    }
+    case 'l':
+    {
+        v -= 0.1f;
+        break;
+    }
+
     default:
         break;
     }

@@ -120,8 +120,7 @@ GLint proj_loc = 0;
 
 // Matrices
 glm::mat4 model_matrix = glm::mat4(1.0f);
-//glm::mat4 view_matrix = glm::mat4(1.0f);
-//glm::mat4 projection_matrix = glm::mat4(1.0f);
+float u = 0.0f, v = 0.0f;
 
 // Axis VAO and VBO
 GLuint axis_vao = 0;
