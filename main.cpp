@@ -67,7 +67,245 @@ void main()
 
 
 
+// Vertex structure for shader compatibility
+struct RenderVertex {
+    float position[3];
+    float color[3];
+};
 
+// Common vertex shader for all primitives
+const char* commonVertexShaderSource = R"(
+#version 430 core
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 color;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+out vec3 fragColor;
+void main() {
+    fragColor = color;
+    gl_Position = projection * view * model * vec4(position, 1.0);
+}
+)";
+
+// Common fragment shader for all primitives
+const char* commonFragmentShaderSource = R"(
+#version 430 core
+in vec3 fragColor;
+out vec4 finalColor;
+void main() {
+    finalColor = vec4(fragColor, 1.0);
+}
+)";
+
+void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+    if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
+        return;
+    }
+
+    // Calculate triangle indices
+    std::vector<GLuint> indices;
+    for (size_t i = 0; i < positions.size(); i += 3) {
+        if (i + 2 < positions.size()) {
+            indices.push_back(static_cast<GLuint>(i));
+            indices.push_back(static_cast<GLuint>(i + 1));
+            indices.push_back(static_cast<GLuint>(i + 2));
+        }
+    }
+
+    // Create vertex data
+    std::vector<RenderVertex> vertices;
+    for (size_t i = 0; i < positions.size(); ++i) {
+        RenderVertex vertex;
+        vertex.position[0] = positions[i].x;
+        vertex.position[1] = positions[i].y;
+        vertex.position[2] = positions[i].z;
+        vertex.color[0] = colors[i].x;
+        vertex.color[1] = colors[i].y;
+        vertex.color[2] = colors[i].z;
+        vertices.push_back(vertex);
+    }
+
+    // Create shader program
+    GLuint shaderProgram = createShaderProgram(commonVertexShaderSource, commonFragmentShaderSource);
+    if (shaderProgram == 0) {
+        return;
+    }
+
+    // Create and bind VAO
+    GLuint vao, vbo, ebo;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Create and bind VBO
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(RenderVertex), vertices.data(), GL_STATIC_DRAW);
+
+    // Create and bind EBO
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+
+    // Set vertex attribute pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Use shader program
+    glUseProgram(shaderProgram);
+
+    // Set uniform matrices
+    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
+
+    // Draw triangles
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(shaderProgram);
+}
+
+void draw_lines(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+    if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
+        return;
+    }
+
+    // Create vertex data
+    std::vector<RenderVertex> vertices;
+    for (size_t i = 0; i < positions.size(); ++i) {
+        RenderVertex vertex;
+        vertex.position[0] = positions[i].x;
+        vertex.position[1] = positions[i].y;
+        vertex.position[2] = positions[i].z;
+        vertex.color[0] = colors[i].x;
+        vertex.color[1] = colors[i].y;
+        vertex.color[2] = colors[i].z;
+        vertices.push_back(vertex);
+    }
+
+    // Create shader program
+    GLuint shaderProgram = createShaderProgram(commonVertexShaderSource, commonFragmentShaderSource);
+    if (shaderProgram == 0) {
+        return;
+    }
+
+    // Create and bind VAO
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Create and bind VBO
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(RenderVertex), vertices.data(), GL_STATIC_DRAW);
+
+    // Set vertex attribute pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Use shader program
+    glUseProgram(shaderProgram);
+
+    // Set uniform matrices
+    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
+
+    // Draw lines
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(shaderProgram);
+}
+
+void draw_points(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+    if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
+        return;
+    }
+
+    // Create vertex data
+    std::vector<RenderVertex> vertices;
+    for (size_t i = 0; i < positions.size(); ++i) {
+        RenderVertex vertex;
+        vertex.position[0] = positions[i].x;
+        vertex.position[1] = positions[i].y;
+        vertex.position[2] = positions[i].z;
+        vertex.color[0] = colors[i].x;
+        vertex.color[1] = colors[i].y;
+        vertex.color[2] = colors[i].z;
+        vertices.push_back(vertex);
+    }
+
+    // Create shader program
+    GLuint shaderProgram = createShaderProgram(commonVertexShaderSource, commonFragmentShaderSource);
+    if (shaderProgram == 0) {
+        return;
+    }
+
+    // Create and bind VAO
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Create and bind VBO
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(RenderVertex), vertices.data(), GL_STATIC_DRAW);
+
+    // Set vertex attribute pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(RenderVertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Use shader program
+    glUseProgram(shaderProgram);
+
+    // Set uniform matrices
+    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
+
+    // Draw points
+    glPointSize(5.0f); // Optional: set point size
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(vertices.size()));
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(shaderProgram);
+}
 
 
 
@@ -302,55 +540,57 @@ void render_string(int x, const int y, void* font, const string& text)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void draw_objects(void)
+
+
+
+
+
+void draw_objects(void) 
 {
-    // Draw the model using modern OpenGL
-    glUseProgram(shader_program);
+    // Prepare vertex and color data from tri_vec
+    std::vector<custom_math::vertex_3> positions;
+    std::vector<custom_math::vertex_3> colors;
 
-
-
-    model_matrix = mat4(1.0);
-
-    model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
-
-
-
-    // Set uniforms
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model_matrix));
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
-    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
-
-    // Draw the mesh
-    glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(tri_vec.size() * 3), GL_UNSIGNED_INT, 0);
-
-    // Draw coordinate axes if enabled
-    if (draw_axis)
+    for (const auto& tri : tri_vec) 
     {
-        glUseProgram(axis_shader_program);
-
-        // Set uniforms for axis shader
-        GLint axis_view_loc = glGetUniformLocation(axis_shader_program, "view");
-        GLint axis_proj_loc = glGetUniformLocation(axis_shader_program, "projection");
-
-        glUniformMatrix4fv(axis_view_loc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
-        glUniformMatrix4fv(axis_proj_loc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
-
-        glBindVertexArray(axis_vao);
-        glDrawArrays(GL_LINES, 0, 12); // 6 axes, 2 points each
+        for (size_t j = 0; j < 3; ++j) 
+        {
+            positions.push_back(tri.vertex[j]);
+            colors.push_back(tri.colour);
+        }
     }
 
-    // Reset state
-    glBindVertexArray(0);
+    // Draw triangles
+    draw_triangles(positions, colors);
 
-    glUseProgram(0);
+    // Optionally draw axes as lines
+    if (draw_axis) {
+        std::vector<custom_math::vertex_3> axis_positions = {
+            {0.0f, 0.0f, 0.0f}, {10.0f, 0.0f, 0.0f},  // x-axis
+            {0.0f, 0.0f, 0.0f}, {0.0f, 10.0f, 0.0f},  // y-axis
+            {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 10.0f},  // z-axis
+            {0.0f, 0.0f, 0.0f}, {-10.0f, 0.0f, 0.0f}, // -x-axis
+            {0.0f, 0.0f, 0.0f}, {0.0f, -10.0f, 0.0f}, // -y-axis
+            {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -10.0f}  // -z-axis
+        };
+        std::vector<custom_math::vertex_3> axis_colors = {
+            {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, // x-axis (red)
+            {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, // y-axis (green)
+            {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, // z-axis (blue)
+            {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, // -x-axis (gray)
+            {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, // -y-axis (gray)
+            {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}  // -z-axis (gray)
+        };
 
-
-
-
-
+        draw_lines(axis_positions, axis_colors);
+    }
 }
+
+
+
+
+
+
 
 void display_func(void)
 {
