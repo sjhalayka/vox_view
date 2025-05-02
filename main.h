@@ -106,10 +106,168 @@ custom_math::vertex_3 min_location, max_location;
 vector<custom_math::vertex_3> voxel_centres;
 vector<float> voxel_densities;
 
+vector<custom_math::vertex_3> background_grid_points;
 
 
 
 
+
+
+
+// Add this to your header file
+struct VoxelGrid {
+	// Grid parameters
+	float voxel_size;
+	custom_math::vertex_3 grid_min;
+	custom_math::vertex_3 grid_max;
+	int grid_size_x, grid_size_y, grid_size_z;
+
+	// 3D array of voxel indices (stores -1 for empty cells)
+	std::vector<int> grid_cells;
+
+	// Initialize the grid based on voxel data
+	void initialize(const std::vector<custom_math::vertex_3>& voxel_centres,
+		const std::vector<float>& voxel_densities,
+		float cell_size = 1.0f) {
+		voxel_size = cell_size;
+
+		// Find min/max extents
+		if (voxel_centres.empty()) return;
+
+		grid_min = voxel_centres[0];
+		grid_max = voxel_centres[0];
+
+		for (const auto& center : voxel_centres) {
+			grid_min.x = std::min(grid_min.x, center.x - voxel_size / 2.0f);
+			grid_min.y = std::min(grid_min.y, center.y - voxel_size / 2.0f);
+			grid_min.z = std::min(grid_min.z, center.z - voxel_size / 2.0f);
+
+			grid_max.x = std::max(grid_max.x, center.x + voxel_size / 2.0f);
+			grid_max.y = std::max(grid_max.y, center.y + voxel_size / 2.0f);
+			grid_max.z = std::max(grid_max.z, center.z + voxel_size / 2.0f);
+		}
+
+		// Add padding
+		const float padding = voxel_size * 0.1f;
+		grid_min.x -= padding;
+		grid_min.y -= padding;
+		grid_min.z -= padding;
+		grid_max.x += padding;
+		grid_max.y += padding;
+		grid_max.z += padding;
+
+		// Calculate grid dimensions
+		float size_x = grid_max.x - grid_min.x;
+		float size_y = grid_max.y - grid_min.y;
+		float size_z = grid_max.z - grid_min.z;
+
+		grid_size_x = static_cast<int>(std::ceil(size_x / voxel_size));
+		grid_size_y = static_cast<int>(std::ceil(size_y / voxel_size));
+		grid_size_z = static_cast<int>(std::ceil(size_z / voxel_size));
+
+		// Initialize grid with -1 (empty)
+		grid_cells.resize(grid_size_x * grid_size_y * grid_size_z, -1);
+
+		// Place voxels in the grid
+		for (size_t i = 0; i < voxel_centres.size(); i++) {
+			if (voxel_densities[i] <= 0.0f) continue;
+
+			const auto& center = voxel_centres[i];
+
+			// Get grid cell coordinates
+			int cell_x = static_cast<int>((center.x - grid_min.x) / voxel_size);
+			int cell_y = static_cast<int>((center.y - grid_min.y) / voxel_size);
+			int cell_z = static_cast<int>((center.z - grid_min.z) / voxel_size);
+
+			// Ensure within bounds
+			cell_x = std::max(0, std::min(cell_x, grid_size_x - 1));
+			cell_y = std::max(0, std::min(cell_y, grid_size_y - 1));
+			cell_z = std::max(0, std::min(cell_z, grid_size_z - 1));
+
+			// Get index in the flattened 3D array
+			size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
+
+			// Store voxel index in the grid
+			if (cell_index < grid_cells.size()) {
+				grid_cells[cell_index] = static_cast<int>(i);
+			}
+		}
+	}
+
+	// Find which voxel contains a point
+	bool find_voxel_containing_point(const custom_math::vertex_3& point,
+		size_t& voxel_index) const {
+		// Get grid cell coordinates
+		int cell_x = static_cast<int>((point.x - grid_min.x) / voxel_size);
+		int cell_y = static_cast<int>((point.y - grid_min.y) / voxel_size);
+		int cell_z = static_cast<int>((point.z - grid_min.z) / voxel_size);
+
+		// Check bounds
+		if (cell_x < 0 || cell_x >= grid_size_x ||
+			cell_y < 0 || cell_y >= grid_size_y ||
+			cell_z < 0 || cell_z >= grid_size_z) {
+			return false;  // Outside grid
+		}
+
+		// Find the index in the flattened 3D array
+		size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
+
+		int voxel_idx = grid_cells[cell_index];
+
+		if (voxel_idx == -1) {
+			return false;  // No voxel here
+		}
+
+		// Do a precise check against the voxel
+		const float half_size = voxel_size * 0.5f;
+		const custom_math::vertex_3& center = voxel_centres[voxel_idx];
+
+		if (point.x >= center.x - half_size &&
+			point.x <= center.x + half_size &&
+			point.y >= center.y - half_size &&
+			point.y <= center.y + half_size &&
+			point.z >= center.z - half_size &&
+			point.z <= center.z + half_size) {
+
+			voxel_index = voxel_idx;
+			return true;
+		}
+
+		return false;
+	}
+};
+
+// Combine the grid with the model transformation
+bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
+	const glm::mat4& model_matrix,
+	const VoxelGrid& grid,
+	size_t& voxel_index) {
+	// 1. Calculate the inverse model matrix
+	glm::mat4 inv_model_matrix = glm::inverse(model_matrix);
+
+	// 2. Transform the test point with the inverse model matrix
+	glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
+	glm::vec4 local_space_point = inv_model_matrix * model_space_point;
+
+	// 3. Create a vertex_3 from the transformed point
+	custom_math::vertex_3 transformed_point(
+		local_space_point.x,
+		local_space_point.y,
+		local_space_point.z
+	);
+
+	// 4. Use the grid to find the voxel
+	return grid.find_voxel_containing_point(transformed_point, voxel_index);
+}
+
+
+
+
+VoxelGrid voxel_grid;
+
+
+
+		
 glm::mat4 model_matrix = glm::mat4(1.0f);
 float u = 0.0f, v = 0.0f;
 
@@ -313,6 +471,8 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+
+	cout << voxel_centres.size() << endl;
 
 	for (size_t x = 0; x < scene->models[0]->size_x; x++)
 	{

@@ -249,6 +249,20 @@ int main(int argc, char** argv)
 
     read_quads_from_vox_file("chr_knight.vox", tri_vec);
 
+    voxel_grid.initialize(voxel_centres, voxel_densities);
+
+
+    //size_t voxel_index = 0;
+
+    //custom_math::vertex_3 test_point(0, 0, 0);  // Your test point
+
+    //if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) {
+    //    std::cout << "Point is in voxel #" << voxel_index << std::endl;
+    //}
+    //else {
+    //    std::cout << "Point is not in any voxel" << std::endl;
+    //}
+
     glutInit(&argc, argv);
     init_opengl(win_x, win_y);
 
