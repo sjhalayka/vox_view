@@ -98,7 +98,7 @@ void main() {
 }
 )";
 
-void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors, glm::mat4 model) {
     if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
         return;
     }
@@ -160,9 +160,9 @@ void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const s
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    //glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
@@ -178,7 +178,7 @@ void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const s
     glDeleteProgram(shaderProgram);
 }
 
-void draw_lines(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+void draw_lines(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors, glm::mat4 model) {
     if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
         return;
     }
@@ -225,9 +225,9 @@ void draw_lines(const std::vector<custom_math::vertex_3>& positions, const std::
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    //glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
@@ -242,7 +242,7 @@ void draw_lines(const std::vector<custom_math::vertex_3>& positions, const std::
     glDeleteProgram(shaderProgram);
 }
 
-void draw_points(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors) {
+void draw_points(const std::vector<custom_math::vertex_3>& positions, const std::vector<custom_math::vertex_3>& colors, glm::mat4 model) {
     if (positions.empty() || colors.empty() || positions.size() != colors.size()) {
         return;
     }
@@ -289,9 +289,9 @@ void draw_points(const std::vector<custom_math::vertex_3>& positions, const std:
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+    //glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
@@ -560,8 +560,12 @@ void draw_objects(void)
         }
     }
 
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
     // Draw triangles
-    draw_triangles(positions, colors);
+    draw_triangles(positions, colors, model);
 
     // Optionally draw axes as lines
     if (draw_axis) {
@@ -582,7 +586,7 @@ void draw_objects(void)
             {0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}  // -z-axis (gray)
         };
 
-        draw_lines(axis_positions, axis_colors);
+        draw_lines(axis_positions, axis_colors, glm::mat4(1.0f));
     }
 }
 
