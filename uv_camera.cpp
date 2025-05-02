@@ -51,12 +51,20 @@ void uv_camera::transform(void)
 	rotate();
 	translate();
 
-	projection_mat = perspective(
-		glm::radians(fov),
-		float(win_x) / float(win_y),
-		near_plane,
-		far_plane
-	);
+
+	if (win_y == 0)
+	{
+		projection_mat = mat4(1.0f);
+	}
+	else
+	{
+		projection_mat = perspective(
+			glm::radians(fov),
+			float(win_x) / float(win_y),
+			near_plane,
+			far_plane
+		);
+	}
 
 	view_mat = glm::lookAt(
 		eye,

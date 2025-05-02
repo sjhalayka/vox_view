@@ -77,7 +77,7 @@ custom_math::vector_3 control_list_colour(1.0f, 1.0f, 1.0f);
 
 bool draw_axis = true;
 bool draw_control_list = true;
-
+bool draw_triangles_on_screen = true;
 uv_camera main_camera;
 
 GLint win_id = 0;
@@ -103,24 +103,16 @@ int mouse_y = 0;
 vector<custom_math::triangle> tri_vec;
 custom_math::vertex_3 min_location, max_location;
 
-// OpenGL 4 variables
-GLuint shader_program = 0;
-GLuint vao = 0;
-GLuint vbo = 0;
-GLuint ebo = 0;
+vector<custom_math::vertex_3> voxel_centres;
+vector<float> voxel_densities;
 
-// Uniform locations
-GLint model_loc = 0;
-GLint view_loc = 0;
-GLint proj_loc = 0;
 
-// Matrices
+
+
+
 glm::mat4 model_matrix = glm::mat4(1.0f);
 float u = 0.0f, v = 0.0f;
 
-// Axis VAO and VBO
-GLuint axis_vao = 0;
-GLuint axis_vbo = 0;
 
 void calc_AABB_min_max_locations(void)
 {
@@ -206,6 +198,15 @@ void centre_mesh_on_xyz(void)
 			tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
 		}
 	}
+
+	for (size_t t = 0; t < voxel_centres.size(); t++)
+	{
+
+			voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+			voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+			voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+	}
+
 }
 
 bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math::triangle>& triangles, const char* const file_name)
@@ -278,6 +279,8 @@ bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math:
 bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& tri_vec)
 {
 	tri_vec.clear();
+	voxel_centres.clear();
+	voxel_densities.clear();
 
 	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
@@ -308,6 +311,9 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
 
+	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+
 	for (size_t x = 0; x < scene->models[0]->size_x; x++)
 	{
 		for (size_t y = 0; y < scene->models[0]->size_y; y++)
@@ -319,9 +325,22 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
 				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
+				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
+
+				voxel_centres[voxel_index] = translate;
+
+
+
 				// Transparent
 				if (colour_index == 0)
+				{
+					voxel_densities[voxel_index] = 0.0;
 					continue;
+				}
+				else
+				{
+					voxel_densities[voxel_index] = 1.0;
+				}
 
 				const ogt_vox_rgba colour = scene->palette.color[colour_index];
 
@@ -331,7 +350,6 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 				uint8_t b = colour.b;
 				uint8_t a = colour.a;  // Alpha channel
 
-				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
@@ -526,6 +544,14 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 		tri_vec[i].vertex[1].rotate_x(pi - pi / 2.0f);
 		tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
 	}
+
+	for (size_t i = 0; i < voxel_centres.size(); i++)
+	{
+		static const float pi = 4.0f * atanf(1.0f);
+
+		voxel_centres[i].rotate_x(pi - pi / 2.0f);
+	}
+
 
 	centre_mesh_on_xyz();
 

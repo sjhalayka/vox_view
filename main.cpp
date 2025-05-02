@@ -226,9 +226,7 @@ void draw_points(const std::vector<custom_math::vertex_3>& positions, const std:
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-    //glm::mat4 model = glm::mat4(1.0f);
-    //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
@@ -244,11 +242,6 @@ void draw_points(const std::vector<custom_math::vertex_3>& positions, const std:
     glDeleteProgram(shaderProgram);
 }
 
-
-
-
-// OpenGL 4 variables
-GLuint axis_shader_program = 0;
 
 int main(int argc, char** argv)
 {
@@ -374,18 +367,18 @@ void render_string(int x, const int y, void* font, const string& text)
 
 
 
-void draw_objects(void) 
+void draw_objects(void)
 {
     // Prepare vertex and color data from tri_vec
     std::vector<custom_math::vertex_3> positions;
     std::vector<custom_math::vertex_3> colors;
 
-    for (const auto& tri : tri_vec) 
+    for (size_t i = 0; i < voxel_centres.size(); i++)
     {
-        for (size_t j = 0; j < 3; ++j) 
+        if (voxel_densities[i] > 0)
         {
-            positions.push_back(tri.vertex[j]);
-            colors.push_back(tri.colour);
+            positions.push_back(voxel_centres[i]);
+            colors.push_back(custom_math::vertex_3(1, 1, 1));
         }
     }
 
@@ -393,8 +386,31 @@ void draw_objects(void)
     model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-    // Draw triangles
-    draw_triangles(positions, colors, model);
+    draw_points(positions, colors, model);
+
+
+	if (draw_triangles_on_screen)
+	{
+		positions.clear();
+		colors.clear();
+
+		for (const auto& tri : tri_vec)
+		{
+			for (size_t j = 0; j < 3; ++j)
+			{
+				positions.push_back(tri.vertex[j]);
+				colors.push_back(tri.colour);
+			}
+		}
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		// Draw triangles
+		draw_triangles(positions, colors, model);
+	}
+
 
     // Optionally draw axes as lines
     if (draw_axis) {
@@ -476,6 +492,12 @@ void keyboard_func(unsigned char key, int x, int y)
 {
     switch (tolower(key))
     {
+    case 't':
+    {
+        draw_triangles_on_screen = !draw_triangles_on_screen;
+        break;
+    }
+
     case 'w':
     {
         draw_axis = !draw_axis;
@@ -572,14 +594,7 @@ void passive_motion_func(int x, int y)
 
 void cleanup(void)
 {
-    // Delete OpenGL objects
-    glDeleteVertexArrays(1, &vao);
-    glDeleteVertexArrays(1, &axis_vao);
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-    glDeleteBuffers(1, &axis_vbo);
-    glDeleteProgram(shader_program);
-    glDeleteProgram(axis_shader_program);
+
 
 
 
