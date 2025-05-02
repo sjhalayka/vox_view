@@ -239,11 +239,11 @@ struct VoxelGrid {
 
 // Combine the grid with the model transformation
 bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
-	const glm::mat4& model_matrix,
+	const glm::mat4& model,
 	const VoxelGrid& grid,
 	size_t& voxel_index) {
 	// 1. Calculate the inverse model matrix
-	glm::mat4 inv_model_matrix = glm::inverse(model_matrix);
+	glm::mat4 inv_model_matrix = glm::inverse(model);
 
 	// 2. Transform the test point with the inverse model matrix
 	glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
@@ -719,6 +719,54 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 	return true;
 }
+
+
+
+void get_background_points(vector<custom_math::vertex_3>& points)
+{
+	points.clear();
+
+	size_t res = 30;
+
+	float x_grid_max = 20;
+	float y_grid_max = 20;
+	float z_grid_max = 20;
+	float x_grid_min = -x_grid_max;
+	float y_grid_min = -y_grid_max;
+	float z_grid_min = -z_grid_max;
+	size_t x_res = res;
+	size_t y_res = res;
+	size_t z_res = res;
+
+	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
+	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
+	const float z_step_size = (z_grid_max - z_grid_min) / (z_res - 1);
+
+	custom_math::vertex_3 Z(x_grid_min, y_grid_min, x_grid_min);
+
+	for (size_t z = 0; z < z_res; z++, Z.z += z_step_size)
+	{
+		Z.x = x_grid_min;
+
+		for (size_t x = 0; x < x_res; x++, Z.x += x_step_size)
+		{
+			Z.y = y_grid_min;
+
+			for (size_t y = 0; y < y_res; y++, Z.y += y_step_size)
+			{
+				custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
+
+				size_t voxel_index = 0;
+
+				if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) 
+				{
+					points.push_back(test_point);
+				}
+			}
+		}
+	}
+}
+
 
 
 

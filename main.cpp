@@ -251,17 +251,7 @@ int main(int argc, char** argv)
 
     voxel_grid.initialize(voxel_centres, voxel_densities);
 
-
-    //size_t voxel_index = 0;
-
-    //custom_math::vertex_3 test_point(0, 0, 0);  // Your test point
-
-    //if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) {
-    //    std::cout << "Point is in voxel #" << voxel_index << std::endl;
-    //}
-    //else {
-    //    std::cout << "Point is not in any voxel" << std::endl;
-    //}
+    get_background_points(background_grid_points);
 
     glutInit(&argc, argv);
     init_opengl(win_x, win_y);
@@ -396,11 +386,26 @@ void draw_objects(void)
         }
     }
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-    draw_points(positions, colors, model);
+
+    draw_points(positions, colors, model_matrix);
+
+
+
+
+
+    positions.clear();
+    colors.clear();
+
+    for (size_t i = 0; i < background_grid_points.size(); i++)
+    {
+
+            positions.push_back(background_grid_points[i]);
+            colors.push_back(custom_math::vertex_3(1.0, 0.5, 0.0));
+    }
+
+    draw_points(positions, colors, glm::mat4(1.0f));
+
 
 
 	if (draw_triangles_on_screen)
@@ -417,12 +422,12 @@ void draw_objects(void)
 			}
 		}
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+		//glm::mat4 model = glm::mat4(1.0f);
+		//model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
 		// Draw triangles
-		draw_triangles(positions, colors, model);
+		draw_triangles(positions, colors, model_matrix);
 	}
 
 
@@ -525,21 +530,45 @@ void keyboard_func(unsigned char key, int x, int y)
     case 'o':
     {
         u += 0.1f;
+
+        model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
+        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        get_background_points(background_grid_points);
         break;
     }
     case 'p':
     {
         u -= 0.1f;
+
+        model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
+        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        get_background_points(background_grid_points);
         break;
     }
     case 'k':
     {
         v += 0.1f;
+
+        model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
+        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        get_background_points(background_grid_points);
         break;
     }
     case 'l':
     {
         v -= 0.1f;
+
+        model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
+        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        get_background_points(background_grid_points);
         break;
     }
 
