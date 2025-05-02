@@ -70,10 +70,6 @@ void render_string(int x, const int y, void* font, const string& text);
 void draw_objects(void);
 void cleanup(void);
 
-// OpenGL 4 function prototypes
-void init_shaders(void);
-void setup_vao(void);
-//void update_matrices(void);
 
 // Global variables
 custom_math::vector_3 background_colour(0.0f, 0.0f, 0.0f);

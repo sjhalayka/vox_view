@@ -1,69 +1,6 @@
 #include "main.h"
 #include "shader_utils.h"
 
-// Shader source code
-const char* vertexShaderSource = R"(
-#version 430 core
-
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 color;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec3 fragColor;
-
-void main()
-{
-    fragColor = color;
-    gl_Position = projection * view * model * vec4(position, 1.0);
-}
-)";
-
-const char* fragmentShaderSource = R"(
-#version 430 core
-
-in vec3 fragColor;
-out vec4 finalColor;
-
-void main()
-{
-    finalColor = vec4(fragColor, 1.0);
-}
-)";
-
-// Axis shader source code
-const char* axisVertexShaderSource = R"(
-#version 430 core
-
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 color;
-
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec3 fragColor;
-
-void main()
-{
-    fragColor = color;
-    gl_Position = projection * view * vec4(position, 1.0);
-}
-)";
-
-const char* axisFragmentShaderSource = R"(
-#version 430 core
-
-in vec3 fragColor;
-out vec4 finalColor;
-
-void main()
-{
-    finalColor = vec4(fragColor, 1.0);
-}
-)";
-
 
 
 
@@ -329,10 +266,6 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Setup OpenGL 4 objects
-    init_shaders();
-    setup_vao();
-
     glutReshapeFunc(reshape_func);
     glutIdleFunc(idle_func);
     glutDisplayFunc(display_func);
@@ -347,110 +280,6 @@ int main(int argc, char** argv)
     return 0;
 }
 
-void init_shaders(void)
-{
-    // Create the main shader program
-    shader_program = createShaderProgram(vertexShaderSource, fragmentShaderSource);
-
-    // Get uniform locations
-    model_loc = glGetUniformLocation(shader_program, "model");
-    view_loc = glGetUniformLocation(shader_program, "view");
-    proj_loc = glGetUniformLocation(shader_program, "projection");
-
-    // Create the axis shader program
-    axis_shader_program = createShaderProgram(axisVertexShaderSource, axisFragmentShaderSource);
-}
-
-void setup_vao(void)
-{
-    // Create buffers for the main mesh
-    std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
-
-    // Convert triangle data to buffers
-    size_t index_offset = 0;
-    for (size_t i = 0; i < tri_vec.size(); i++) {
-        for (size_t j = 0; j < 3; j++) {
-            Vertex vertex;
-            vertex.position[0] = tri_vec[i].vertex[j].x;
-            vertex.position[1] = tri_vec[i].vertex[j].y;
-            vertex.position[2] = tri_vec[i].vertex[j].z;
-            vertex.color[0] = tri_vec[i].colour.x;
-            vertex.color[1] = tri_vec[i].colour.y;
-            vertex.color[2] = tri_vec[i].colour.z;
-            vertices.push_back(vertex);
-        }
-
-        // Add indices for triangle
-        indices.push_back(static_cast<GLuint>(index_offset));
-        indices.push_back(static_cast<GLuint>(index_offset + 1));
-        indices.push_back(static_cast<GLuint>(index_offset + 2));
-        index_offset += 3;
-    }
-
-    // Create and bind the main VAO
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    // Create and bind the VBO
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-    // Create and bind the EBO
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
-
-    // Set attribute pointers
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // Unbind VAO
-    glBindVertexArray(0);
-
-    // Setup axis VAO
-    float axis_vertices[] = {
-        // Position (x,y,z)     // Color (r,g,b)
-        0.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis start (red)
-        10.0f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f,  // x-axis end
-        0.0f, 0.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis start (green)
-        0.0f, 10.0f, 0.0f,      0.0f, 1.0f, 0.0f,  // y-axis end
-        0.0f, 0.0f, 0.0f,      0.0f, 0.0f, 1.0f,  // z-axis start (blue)
-        0.0f, 0.0f, 10.0f,      0.0f, 0.0f, 1.0f,  // z-axis end
-        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -x-axis start (gray)
-        -10.0f, 0.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -x-axis end
-        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -y-axis start
-        0.0f, -10.0f, 0.0f,     0.5f, 0.5f, 0.5f,  // -y-axis end
-        0.0f, 0.0f, 0.0f,      0.5f, 0.5f, 0.5f,  // -z-axis start
-        0.0f, 0.0f, -10.0f,     0.5f, 0.5f, 0.5f   // -z-axis end
-    };
-
-    // Generate axis VAO and VBO
-    glGenVertexArrays(1, &axis_vao);
-    glBindVertexArray(axis_vao);
-
-    glGenBuffers(1, &axis_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(axis_vertices), axis_vertices, GL_STATIC_DRAW);
-
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // Unbind axis VAO
-    glBindVertexArray(0);
-}
-    
 
 void idle_func(void)
 {
