@@ -52,13 +52,13 @@ using namespace std;
 
 // OpenGL 4 additions
 struct Vertex {
-    float position[3];
-    float color[3];
+	float position[3];
+	float color[3];
 };
 
 // Function prototypes
 void idle_func(void);
-void init_opengl(const int &width, const int &height);
+void init_opengl(const int& width, const int& height);
 void reshape_func(int width, int height);
 void display_func(void);
 void keyboard_func(unsigned char key, int x, int y);
@@ -66,7 +66,7 @@ void mouse_func(int button, int state, int x, int y);
 void motion_func(int x, int y);
 void passive_motion_func(int x, int y);
 
-void render_string(int x, const int y, void *font, const string &text);
+void render_string(int x, const int y, void* font, const string& text);
 void draw_objects(void);
 void cleanup(void);
 
@@ -92,7 +92,7 @@ float camera_fov = 45;
 float camera_x_transform = 0;
 float camera_y_transform = 0;
 float u_spacer = 0.01f;
-float v_spacer = 0.5f*u_spacer;
+float v_spacer = 0.5f * u_spacer;
 float w_spacer = 0.1f;
 float camera_near = 0.01f;
 float camera_far = 100.0f;
@@ -128,397 +128,414 @@ GLuint axis_vbo = 0;
 
 void calc_AABB_min_max_locations(void)
 {
-    float x_min = numeric_limits<float>::max();
-    float y_min = numeric_limits<float>::max();
-    float z_min = numeric_limits<float>::max();
-    float x_max = -numeric_limits<float>::max();
-    float y_max = -numeric_limits<float>::max();
-    float z_max = -numeric_limits<float>::max();
+	float x_min = numeric_limits<float>::max();
+	float y_min = numeric_limits<float>::max();
+	float z_min = numeric_limits<float>::max();
+	float x_max = -numeric_limits<float>::max();
+	float y_max = -numeric_limits<float>::max();
+	float z_max = -numeric_limits<float>::max();
 
-    for (size_t t = 0; t < tri_vec.size(); t++)
-    {
-        for (size_t j = 0; j < 3; j++)
-        {
-            if (tri_vec[t].vertex[j].x < x_min)
-                x_min = tri_vec[t].vertex[j].x;
+	for (size_t t = 0; t < tri_vec.size(); t++)
+	{
+		for (size_t j = 0; j < 3; j++)
+		{
+			if (tri_vec[t].vertex[j].x < x_min)
+				x_min = tri_vec[t].vertex[j].x;
 
-            if (tri_vec[t].vertex[j].x > x_max)
-                x_max = tri_vec[t].vertex[j].x;
+			if (tri_vec[t].vertex[j].x > x_max)
+				x_max = tri_vec[t].vertex[j].x;
 
-            if (tri_vec[t].vertex[j].y < y_min)
-                y_min = tri_vec[t].vertex[j].y;
+			if (tri_vec[t].vertex[j].y < y_min)
+				y_min = tri_vec[t].vertex[j].y;
 
-            if (tri_vec[t].vertex[j].y > y_max)
-                y_max = tri_vec[t].vertex[j].y;
+			if (tri_vec[t].vertex[j].y > y_max)
+				y_max = tri_vec[t].vertex[j].y;
 
-            if (tri_vec[t].vertex[j].z < z_min)
-                z_min = tri_vec[t].vertex[j].z;
+			if (tri_vec[t].vertex[j].z < z_min)
+				z_min = tri_vec[t].vertex[j].z;
 
-            if (tri_vec[t].vertex[j].z > z_max)
-                z_max = tri_vec[t].vertex[j].z;
-        }
-    }
+			if (tri_vec[t].vertex[j].z > z_max)
+				z_max = tri_vec[t].vertex[j].z;
+		}
+	}
 
-    min_location.x = x_min;
-    min_location.y = y_min;
-    min_location.z = z_min;
+	min_location.x = x_min;
+	min_location.y = y_min;
+	min_location.z = z_min;
 
-    max_location.x = x_max;
-    max_location.y = y_max;
-    max_location.z = z_max;
+	max_location.x = x_max;
+	max_location.y = y_max;
+	max_location.z = z_max;
 }
 
 void centre_mesh_on_xyz(void)
 {
-    float x_min = numeric_limits<float>::max();
-    float y_min = numeric_limits<float>::max();
-    float z_min = numeric_limits<float>::max();
-    float x_max = -numeric_limits<float>::max();
-    float y_max = -numeric_limits<float>::max();
-    float z_max = -numeric_limits<float>::max();
+	float x_min = numeric_limits<float>::max();
+	float y_min = numeric_limits<float>::max();
+	float z_min = numeric_limits<float>::max();
+	float x_max = -numeric_limits<float>::max();
+	float y_max = -numeric_limits<float>::max();
+	float z_max = -numeric_limits<float>::max();
 
-    for (size_t t = 0; t < tri_vec.size(); t++)
-    {
-        for (size_t j = 0; j < 3; j++)
-        {
-            if (tri_vec[t].vertex[j].x < x_min)
-                x_min = tri_vec[t].vertex[j].x;
+	for (size_t t = 0; t < tri_vec.size(); t++)
+	{
+		for (size_t j = 0; j < 3; j++)
+		{
+			if (tri_vec[t].vertex[j].x < x_min)
+				x_min = tri_vec[t].vertex[j].x;
 
-            if (tri_vec[t].vertex[j].x > x_max)
-                x_max = tri_vec[t].vertex[j].x;
+			if (tri_vec[t].vertex[j].x > x_max)
+				x_max = tri_vec[t].vertex[j].x;
 
-            if (tri_vec[t].vertex[j].y < y_min)
-                y_min = tri_vec[t].vertex[j].y;
+			if (tri_vec[t].vertex[j].y < y_min)
+				y_min = tri_vec[t].vertex[j].y;
 
-            if (tri_vec[t].vertex[j].y > y_max)
-                y_max = tri_vec[t].vertex[j].y;
+			if (tri_vec[t].vertex[j].y > y_max)
+				y_max = tri_vec[t].vertex[j].y;
 
-            if (tri_vec[t].vertex[j].z < z_min)
-                z_min = tri_vec[t].vertex[j].z;
+			if (tri_vec[t].vertex[j].z < z_min)
+				z_min = tri_vec[t].vertex[j].z;
 
-            if (tri_vec[t].vertex[j].z > z_max)
-                z_max = tri_vec[t].vertex[j].z;
-        }
-    }
+			if (tri_vec[t].vertex[j].z > z_max)
+				z_max = tri_vec[t].vertex[j].z;
+		}
+	}
 
-    for (size_t t = 0; t < tri_vec.size(); t++)
-    {
-        for (size_t j = 0; j < 3; j++)
-        {
-            tri_vec[t].vertex[j].x += -(x_max + x_min) / 2.0f;
-            tri_vec[t].vertex[j].y += -(y_max + y_min) / 2.0f;
-            tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
-        }
-    }
+	for (size_t t = 0; t < tri_vec.size(); t++)
+	{
+		for (size_t j = 0; j < 3; j++)
+		{
+			tri_vec[t].vertex[j].x += -(x_max + x_min) / 2.0f;
+			tri_vec[t].vertex[j].y += -(y_max + y_min) / 2.0f;
+			tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
+		}
+	}
 }
 
 bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math::triangle>& triangles, const char* const file_name)
 {
-    cout << "Triangle count: " << triangles.size() << endl;
+	cout << "Triangle count: " << triangles.size() << endl;
 
-    if (0 == triangles.size())
-        return false;
+	if (0 == triangles.size())
+		return false;
 
-    // Write to file.
-    ofstream out(file_name, ios_base::binary);
+	// Write to file.
+	ofstream out(file_name, ios_base::binary);
 
-    if (out.fail())
-        return false;
+	if (out.fail())
+		return false;
 
-    const size_t header_size = 80;
-    vector<char> buffer(header_size, 0);
-    const unsigned int num_triangles = static_cast<unsigned int>(triangles.size()); // Must be 4-byte unsigned int.
-    custom_math::vertex_3 normal;
+	const size_t header_size = 80;
+	vector<char> buffer(header_size, 0);
+	const unsigned int num_triangles = static_cast<unsigned int>(triangles.size()); // Must be 4-byte unsigned int.
+	custom_math::vertex_3 normal;
 
-    // Write blank header.
-    out.write(reinterpret_cast<const char*>(&(buffer[0])), header_size);
+	// Write blank header.
+	out.write(reinterpret_cast<const char*>(&(buffer[0])), header_size);
 
-    // Write number of triangles.
-    out.write(reinterpret_cast<const char*>(&num_triangles), sizeof(unsigned int));
+	// Write number of triangles.
+	out.write(reinterpret_cast<const char*>(&num_triangles), sizeof(unsigned int));
 
-    // Copy everything to a single buffer.
-    cout << "Generating normal/vertex/attribute buffer" << endl;
+	// Copy everything to a single buffer.
+	cout << "Generating normal/vertex/attribute buffer" << endl;
 
-    // Enough bytes for twelve 4-byte floats plus one 2-byte integer, per triangle.
-    const size_t data_size = (12 * sizeof(float) + sizeof(short unsigned int)) * num_triangles;
-    buffer.resize(data_size, 0);
+	// Enough bytes for twelve 4-byte floats plus one 2-byte integer, per triangle.
+	const size_t data_size = (12 * sizeof(float) + sizeof(short unsigned int)) * num_triangles;
+	buffer.resize(data_size, 0);
 
-    // Use a pointer to assist with the copying.
-    char* cp = &buffer[0];
+	// Use a pointer to assist with the copying.
+	char* cp = &buffer[0];
 
-    for (vector<custom_math::triangle>::const_iterator i = triangles.begin(); i != triangles.end(); i++)
-    {
-        // Get face normal.
-        custom_math::vertex_3 v0 = i->vertex[1] - i->vertex[0];
-        custom_math::vertex_3 v1 = i->vertex[2] - i->vertex[0];
-        normal = v0.cross(v1);
-        normal.normalize();
+	for (vector<custom_math::triangle>::const_iterator i = triangles.begin(); i != triangles.end(); i++)
+	{
+		// Get face normal.
+		custom_math::vertex_3 v0 = i->vertex[1] - i->vertex[0];
+		custom_math::vertex_3 v1 = i->vertex[2] - i->vertex[0];
+		normal = v0.cross(v1);
+		normal.normalize();
 
-        memcpy(cp, &normal.x, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &normal.y, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &normal.z, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &normal.x, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &normal.y, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &normal.z, sizeof(float)); cp += sizeof(float);
 
-        memcpy(cp, &i->vertex[0].x, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[0].y, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[0].z, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[1].x, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[1].y, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[1].z, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[2].x, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[2].y, sizeof(float)); cp += sizeof(float);
-        memcpy(cp, &i->vertex[2].z, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[0].x, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[0].y, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[0].z, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[1].x, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[1].y, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[1].z, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[2].x, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[2].y, sizeof(float)); cp += sizeof(float);
+		memcpy(cp, &i->vertex[2].z, sizeof(float)); cp += sizeof(float);
 
-        cp += sizeof(short unsigned int);
-    }
+		cp += sizeof(short unsigned int);
+	}
 
-    cout << "Writing " << data_size / 1048576.0f << " MB of data to binary Stereo Lithography file: " << file_name << endl;
+	cout << "Writing " << data_size / 1048576.0f << " MB of data to binary Stereo Lithography file: " << file_name << endl;
 
-    out.write(reinterpret_cast<const char*>(&buffer[0]), data_size);
-    out.close();
+	out.write(reinterpret_cast<const char*>(&buffer[0]), data_size);
+	out.close();
 
-    return true;
+	return true;
 }
 
 bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& tri_vec)
 {
-    tri_vec.clear();
+	tri_vec.clear();
 
-    ifstream infile(file_name, ifstream::ate | ifstream::binary);
+	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
-    if (infile.fail())
-    {
-        cout << "Could not open file " << file_name << endl;
-        return false;
-    }
+	if (infile.fail())
+	{
+		cout << "Could not open file " << file_name << endl;
+		return false;
+	}
 
-    size_t file_size = infile.tellg();
+	size_t file_size = infile.tellg();
 
-    infile.close();
+	infile.close();
 
-    if (file_size == 0)
-        return false;
+	if (file_size == 0)
+		return false;
 
-    infile.open(file_name, ifstream::binary);
+	infile.open(file_name, ifstream::binary);
 
-    if (infile.fail())
-    {
-        return false;
-    }
+	if (infile.fail())
+	{
+		return false;
+	}
 
-    vector<unsigned char> v(file_size, 0);
+	vector<unsigned char> v(file_size, 0);
 
-    infile.read(reinterpret_cast<char*>(&v[0]), file_size);
-    infile.close();
+	infile.read(reinterpret_cast<char*>(&v[0]), file_size);
+	infile.close();
 
-    const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
+	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
 
-    for (size_t x = 0; x < scene->models[0]->size_x; x++)
-    {
-        for (size_t y = 0; y < scene->models[0]->size_y; y++)
-        {
-            for (size_t z = 0; z < scene->models[0]->size_z; z++)
-            {
-                float scale = 1.0;
+	for (size_t x = 0; x < scene->models[0]->size_x; x++)
+	{
+		for (size_t y = 0; y < scene->models[0]->size_y; y++)
+		{
+			for (size_t z = 0; z < scene->models[0]->size_z; z++)
+			{
+				float scale = 1.0;
 
-                const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
-                const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
+				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
+				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
-                // Transparent
-                if (colour_index == 0)
-                    continue;
+				// Transparent
+				if (colour_index == 0)
+					continue;
 
-                const ogt_vox_rgba colour = scene->palette.color[colour_index];
+				const ogt_vox_rgba colour = scene->palette.color[colour_index];
 
-                // Now you can use the individual components
-                uint8_t r = colour.r;
-                uint8_t g = colour.g;
-                uint8_t b = colour.b;
-                uint8_t a = colour.a;  // Alpha channel
+				// Now you can use the individual components
+				uint8_t r = colour.r;
+				uint8_t g = colour.g;
+				uint8_t b = colour.b;
+				uint8_t a = colour.a;  // Alpha channel
 
-                custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
+				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
 
-                custom_math::quad q0, q1, q2, q3, q4, q5;
+				custom_math::quad q0, q1, q2, q3, q4, q5;
 
-                size_t neighbour_index = 0;
+				size_t neighbour_index = 0;
 
-                // Top face (y = 1.0f)
-                q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-                q0.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-                q0.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-                q0.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				// Top face (y = 1.0f)
+				q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				q0.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				q0.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q0.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
 
-                q0.colour.x = r / 255.0f;
-                q0.colour.y = g / 255.0f;
-                q0.colour.z = b / 255.0f;
+				q0.colour.x = r / 255.0f;
+				q0.colour.y = g / 255.0f;
+				q0.colour.z = b / 255.0f;
 
-                // Bottom face (y = -scale*0.5f)
-                q1.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-                q1.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-                q1.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-                q1.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				// Bottom face (y = -scale*0.5f)
+				q1.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				q1.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				q1.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				q1.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
 
-                q1.colour.x = r / 255.0f;
-                q1.colour.y = g / 255.0f;
-                q1.colour.z = b / 255.0f;
+				q1.colour.x = r / 255.0f;
+				q1.colour.y = g / 255.0f;
+				q1.colour.z = b / 255.0f;
 
-                // Front face  (z = scale*0.5f)
-                q2.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-                q2.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-                q2.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-                q2.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				// Front face  (z = scale*0.5f)
+				q2.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q2.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q2.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				q2.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 
-                q2.colour.x = r / 255.0f;
-                q2.colour.y = g / 255.0f;
-                q2.colour.z = b / 255.0f;
+				q2.colour.x = r / 255.0f;
+				q2.colour.y = g / 255.0f;
+				q2.colour.z = b / 255.0f;
 
-                // Back face (z = -scale*0.5f)
-                q3.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-                q3.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-                q3.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-                q3.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				// Back face (z = -scale*0.5f)
+				q3.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				q3.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				q3.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				q3.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 
-                q3.colour.x = r / 255.0f;
-                q3.colour.y = g / 255.0f;
-                q3.colour.z = b / 255.0f;
+				q3.colour.x = r / 255.0f;
+				q3.colour.y = g / 255.0f;
+				q3.colour.z = b / 255.0f;
 
-                // Right face (x = scale*0.5f)
-                q4.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-                q4.vertex[1] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-                q4.vertex[2] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-                q4.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-                q4.vertex[0].nx = 1;
-                q4.vertex[1].nx = 1;
-                q4.vertex[2].nx = 1;
-                q4.vertex[3].nx = 1;
+				// Right face (x = scale*0.5f)
+				q4.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				q4.vertex[1] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q4.vertex[2] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				q4.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				q4.vertex[0].nx = 1;
+				q4.vertex[1].nx = 1;
+				q4.vertex[2].nx = 1;
+				q4.vertex[3].nx = 1;
 
-                q4.colour.x = r / 255.0f;
-                q4.colour.y = g / 255.0f;
-                q4.colour.z = b / 255.0f;
+				q4.colour.x = r / 255.0f;
+				q4.colour.y = g / 255.0f;
+				q4.colour.z = b / 255.0f;
 
-                // Left face (x = -scale*0.5f)
-                q5.vertex[0] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-                q5.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-                q5.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-                q5.vertex[3] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-                q5.vertex[0].nx = -1;
-                q5.vertex[1].nx = -1;
-                q5.vertex[2].nx = -1;
-                q5.vertex[3].nx = -1;
+				// Left face (x = -scale*0.5f)
+				q5.vertex[0] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q5.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				q5.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				q5.vertex[3] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				q5.vertex[0].nx = -1;
+				q5.vertex[1].nx = -1;
+				q5.vertex[2].nx = -1;
+				q5.vertex[3].nx = -1;
 
-                q5.colour.x = r / 255.0f;
-                q5.colour.y = g / 255.0f;
-                q5.colour.z = b / 255.0f;
+				q5.colour.x = r / 255.0f;
+				q5.colour.y = g / 255.0f;
+				q5.colour.z = b / 255.0f;
 
-                custom_math::triangle t;
+				custom_math::triangle t;
 
-                t.colour.x = r / 255.0f;
-                t.colour.y = g / 255.0f;
-                t.colour.z = b / 255.0f;
+				t.colour.x = r / 255.0f;
+				t.colour.y = g / 255.0f;
+				t.colour.z = b / 255.0f;
 
-                neighbour_index = x + (y + 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
-                if (y == scene->models[0]->size_y - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q0.vertex[0];
-                    t.vertex[1] = q0.vertex[1];
-                    t.vertex[2] = q0.vertex[2];
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = x + (y + 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
+				if (y == scene->models[0]->size_y - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q0.vertex[0];
+					t.vertex[1] = q0.vertex[1];
+					t.vertex[2] = q0.vertex[2];
 
-                    tri_vec.push_back(t);
+					tri_vec.push_back(t);
 
-                    t.vertex[0] = q0.vertex[0];
-                    t.vertex[1] = q0.vertex[2];
-                    t.vertex[2] = q0.vertex[3];
-                    tri_vec.push_back(t);
-                }
+					t.vertex[0] = q0.vertex[0];
+					t.vertex[1] = q0.vertex[2];
+					t.vertex[2] = q0.vertex[3];
+					tri_vec.push_back(t);
+				}
 
-                neighbour_index = x + (y - 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
-                if (y == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q1.vertex[0];
-                    t.vertex[1] = q1.vertex[1];
-                    t.vertex[2] = q1.vertex[2];
-                    tri_vec.push_back(t);
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = x + (y - 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
+				if (y == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q1.vertex[0];
+					t.vertex[1] = q1.vertex[1];
+					t.vertex[2] = q1.vertex[2];
+					tri_vec.push_back(t);
 
-                    t.vertex[0] = q1.vertex[0];
-                    t.vertex[1] = q1.vertex[2];
-                    t.vertex[2] = q1.vertex[3];
-                    tri_vec.push_back(t);
-                }
+					t.vertex[0] = q1.vertex[0];
+					t.vertex[1] = q1.vertex[2];
+					t.vertex[2] = q1.vertex[3];
+					tri_vec.push_back(t);
+				}
 
-                neighbour_index = x + y*scene->models[0]->size_x + (z + 1) * scene->models[0]->size_x * scene->models[0]->size_y;
-                if (z == scene->models[0]->size_z - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q2.vertex[0];
-                    t.vertex[1] = q2.vertex[1];
-                    t.vertex[2] = q2.vertex[2];
-                    tri_vec.push_back(t);
 
-                    t.vertex[0] = q2.vertex[0];
-                    t.vertex[1] = q2.vertex[2];
-                    t.vertex[2] = q2.vertex[3];
-                    tri_vec.push_back(t);
-                }
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = x + y * scene->models[0]->size_x + (z + 1) * scene->models[0]->size_x * scene->models[0]->size_y;
+				if (z == scene->models[0]->size_z - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q2.vertex[0];
+					t.vertex[1] = q2.vertex[1];
+					t.vertex[2] = q2.vertex[2];
+					tri_vec.push_back(t);
 
-                neighbour_index = x + (y)*scene->models[0]->size_x + (z - 1) * scene->models[0]->size_x * scene->models[0]->size_y;
-                if (z == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q3.vertex[0];
-                    t.vertex[1] = q3.vertex[1];
-                    t.vertex[2] = q3.vertex[2];
-                    tri_vec.push_back(t);
+					t.vertex[0] = q2.vertex[0];
+					t.vertex[1] = q2.vertex[2];
+					t.vertex[2] = q2.vertex[3];
+					tri_vec.push_back(t);
+				}
 
-                    t.vertex[0] = q3.vertex[0];
-                    t.vertex[1] = q3.vertex[2];
-                    t.vertex[2] = q3.vertex[3];
-                    tri_vec.push_back(t);
-                }
 
-                neighbour_index = (x + 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
-                if (x == scene->models[0]->size_x - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q4.vertex[0];
-                    t.vertex[1] = q4.vertex[1];
-                    t.vertex[2] = q4.vertex[2];
-                    tri_vec.push_back(t);
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = x + (y)*scene->models[0]->size_x + (z - 1) * scene->models[0]->size_x * scene->models[0]->size_y;
+				if (z == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q3.vertex[0];
+					t.vertex[1] = q3.vertex[1];
+					t.vertex[2] = q3.vertex[2];
+					tri_vec.push_back(t);
 
-                    t.vertex[0] = q4.vertex[0];
-                    t.vertex[1] = q4.vertex[2];
-                    t.vertex[2] = q4.vertex[3];
-                    tri_vec.push_back(t);
-                }
+					t.vertex[0] = q3.vertex[0];
+					t.vertex[1] = q3.vertex[2];
+					t.vertex[2] = q3.vertex[3];
+					tri_vec.push_back(t);
+				}
 
-                neighbour_index = (x - 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
-                if (x == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
-                {
-                    t.vertex[0] = q5.vertex[0];
-                    t.vertex[1] = q5.vertex[1];
-                    t.vertex[2] = q5.vertex[2];
-                    tri_vec.push_back(t);
 
-                    t.vertex[0] = q5.vertex[0];
-                    t.vertex[1] = q5.vertex[2];
-                    t.vertex[2] = q5.vertex[3];
-                    tri_vec.push_back(t);
-                }
-            }
-        }
-    }
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = (x + 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
+				if (x == scene->models[0]->size_x - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q4.vertex[0];
+					t.vertex[1] = q4.vertex[1];
+					t.vertex[2] = q4.vertex[2];
+					tri_vec.push_back(t);
 
-    ogt_vox_destroy_scene(scene);
+					t.vertex[0] = q4.vertex[0];
+					t.vertex[1] = q4.vertex[2];
+					t.vertex[2] = q4.vertex[3];
+					tri_vec.push_back(t);
+				}
 
-    centre_mesh_on_xyz();
+				// Note that this index is possibly out of range, 
+				// which is why it's used second in the if()
+				neighbour_index = (x - 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
+				if (x == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				{
+					t.vertex[0] = q5.vertex[0];
+					t.vertex[1] = q5.vertex[1];
+					t.vertex[2] = q5.vertex[2];
+					tri_vec.push_back(t);
 
-    for (size_t i = 0; i < tri_vec.size(); i++)
-    {
-        static const float pi = 4.0f * atanf(1.0f);
+					t.vertex[0] = q5.vertex[0];
+					t.vertex[1] = q5.vertex[2];
+					t.vertex[2] = q5.vertex[3];
+					tri_vec.push_back(t);
+				}
+			}
+		}
+	}
 
-        tri_vec[i].vertex[0].rotate_x(pi - pi / 2.0f);
-        tri_vec[i].vertex[1].rotate_x(pi - pi / 2.0f);
-        tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
-    }
+	ogt_vox_destroy_scene(scene);
 
-    calc_AABB_min_max_locations();
 
-    return true;
+
+	for (size_t i = 0; i < tri_vec.size(); i++)
+	{
+		static const float pi = 4.0f * atanf(1.0f);
+
+		tri_vec[i].vertex[0].rotate_x(pi - pi / 2.0f);
+		tri_vec[i].vertex[1].rotate_x(pi - pi / 2.0f);
+		tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
+	}
+
+	centre_mesh_on_xyz();
+
+	calc_AABB_min_max_locations();
+
+	return true;
 }
 
 

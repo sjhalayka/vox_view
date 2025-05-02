@@ -64,6 +64,14 @@ void main()
 }
 )";
 
+
+
+
+
+
+
+
+
 // OpenGL 4 variables
 GLuint axis_shader_program = 0;
 
@@ -237,6 +245,8 @@ void init_opengl(const int& width, const int& height)
     glClearDepth(1.0f);
 
     main_camera.calculate_camera_matrices(win_x, win_y);
+
+
 }
 
 void reshape_func(int width, int height)
@@ -333,7 +343,13 @@ void draw_objects(void)
 
     // Reset state
     glBindVertexArray(0);
+
     glUseProgram(0);
+
+
+
+
+
 }
 
 void display_func(void)
@@ -491,6 +507,9 @@ void cleanup(void)
     glDeleteBuffers(1, &axis_vbo);
     glDeleteProgram(shader_program);
     glDeleteProgram(axis_shader_program);
+
+
+
 
     glutDestroyWindow(win_id);
 }
