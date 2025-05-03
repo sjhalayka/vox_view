@@ -249,7 +249,7 @@ int main(int argc, char** argv)
 
     voxel_grid.initialize(voxel_centres, voxel_densities);
 
-    get_background_points(background_grid_points);
+    get_background_points();
   ///  get_surface_points(background_grid_points);
 
 
@@ -537,7 +537,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_background_points(background_grid_points);
+        get_background_points();
         break;
     }
     case 'p':
@@ -548,7 +548,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_background_points(background_grid_points);
+        get_background_points();
         break;
     }
     case 'k':
@@ -559,7 +559,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_background_points(background_grid_points);
+        get_background_points();
         break;
     }
     case 'l':
@@ -570,7 +570,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_background_points(background_grid_points);
+        get_background_points();
         break;
     }
 

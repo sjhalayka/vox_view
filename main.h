@@ -103,11 +103,14 @@ int mouse_y = 0;
 vector<custom_math::triangle> tri_vec;
 custom_math::vertex_3 min_location, max_location;
 
+
+vector<glm::ivec3> voxel_indices;
 vector<custom_math::vertex_3> voxel_centres;
 vector<float> voxel_densities;
 
-vector<custom_math::vertex_3> background_grid_points;
+//vector<custom_math::vertex_3> background_grid_points;
 
+vector<glm::ivec3> background_indices;
 vector<custom_math::vertex_3> background_centres;
 vector<float> background_densities;
 
@@ -462,10 +465,9 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
 
+	voxel_indices.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
-
-	cout << voxel_centres.size() << endl;
 
 	for (size_t x = 0; x < scene->models[0]->size_x; x++)
 	{
@@ -481,8 +483,7 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
 
 				voxel_centres[voxel_index] = translate;
-
-
+				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
 				// Transparent
 				if (colour_index == 0)
@@ -715,10 +716,8 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 
 
-void get_background_points(vector<custom_math::vertex_3>& points)
+void get_background_points(void)
 {
-	points.clear();
-
 	size_t res = 50;
 
 	float x_grid_max = 10;
@@ -732,7 +731,7 @@ void get_background_points(vector<custom_math::vertex_3>& points)
 	size_t z_res = res;
 
 
-
+	background_indices.resize(x_res * y_res * z_res);
 	background_centres.resize(x_res*y_res*z_res);
 	background_densities.resize(x_res * y_res * z_res);
 
@@ -759,11 +758,11 @@ void get_background_points(vector<custom_math::vertex_3>& points)
 				size_t voxel_index = 0;
 
 				background_centres[index] = test_point;
+				background_indices[index] = glm::ivec3(x, y, z);
 
 				if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) 
 				{
 					background_densities[index] = 1.0;
-					points.push_back(test_point);
 				}
 				else
 				{
