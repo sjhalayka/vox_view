@@ -147,14 +147,6 @@ struct VoxelGrid {
 			grid_max.z = std::max(grid_max.z, center.z + voxel_size / 2.0f);
 		}
 
-		// Add padding
-		const float padding = voxel_size * 0.1f;
-		grid_min.x -= padding;
-		grid_min.y -= padding;
-		grid_min.z -= padding;
-		grid_max.x += padding;
-		grid_max.y += padding;
-		grid_max.z += padding;
 
 		// Calculate grid dimensions
 		float size_x = grid_max.x - grid_min.x;
@@ -726,7 +718,7 @@ void get_background_points(vector<custom_math::vertex_3>& points)
 {
 	points.clear();
 
-	size_t res = 30;
+	size_t res = 100;
 
 	float x_grid_max = 20;
 	float y_grid_max = 20;
