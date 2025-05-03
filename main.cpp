@@ -250,6 +250,9 @@ int main(int argc, char** argv)
     voxel_grid.initialize(voxel_centres, voxel_densities);
 
     get_background_points();
+
+    get_surface_points();
+
   ///  get_surface_points(background_grid_points);
 
 
@@ -410,6 +413,20 @@ void draw_objects(void)
 
 
 
+    positions.clear();
+    colors.clear();
+
+    for (size_t i = 0; i < background_surface_centres.size(); i++)
+    {
+        positions.push_back(background_surface_centres[i]);
+        colors.push_back(custom_math::vertex_3(0, 1, 1)); // Use a distinct color like cyan
+    }
+
+    draw_points(positions, colors, glm::mat4(1.0f));
+
+
+
+
 	if (draw_triangles_on_screen)
 	{
 		positions.clear();
@@ -538,6 +555,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_background_points();
+        get_surface_points();
         break;
     }
     case 'p':
@@ -549,6 +567,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_background_points();
+        get_surface_points();
         break;
     }
     case 'k':
@@ -560,6 +579,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_background_points();
+        get_surface_points();
         break;
     }
     case 'l':
@@ -571,6 +591,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_background_points();
+        get_surface_points();
         break;
     }
 

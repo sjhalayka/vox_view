@@ -108,13 +108,13 @@ vector<glm::ivec3> voxel_indices;
 vector<custom_math::vertex_3> voxel_centres;
 vector<float> voxel_densities;
 
-//vector<custom_math::vertex_3> background_grid_points;
-
 vector<glm::ivec3> background_indices;
 vector<custom_math::vertex_3> background_centres;
 vector<float> background_densities;
 
-
+vector<glm::ivec3> background_surface_indices;
+vector<custom_math::vertex_3> background_surface_centres;
+vector<float> background_surface_densities;
 
 
 
@@ -355,10 +355,9 @@ void centre_mesh_on_xyz(void)
 
 	for (size_t t = 0; t < voxel_centres.size(); t++)
 	{
-
-			voxel_centres[t].x += -(x_max + x_min) / 2.0f;
-			voxel_centres[t].y += -(y_max + y_min) / 2.0f;
-			voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+		voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+		voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+		voxel_centres[t].z += -(z_max + z_min) / 2.0f;
 	}
 
 }
@@ -732,7 +731,7 @@ void get_background_points(void)
 
 
 	background_indices.resize(x_res * y_res * z_res);
-	background_centres.resize(x_res*y_res*z_res);
+	background_centres.resize(x_res * y_res * z_res);
 	background_densities.resize(x_res * y_res * z_res);
 
 	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
@@ -773,6 +772,73 @@ void get_background_points(void)
 	}
 }
 
+
+
+void get_surface_points(void)
+{
+	// Clear any existing data
+	background_surface_indices.clear();
+	background_surface_centres.clear();
+	background_surface_densities.clear();
+
+	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
+	static const int directions[6][3] = {
+		{1, 0, 0}, {-1, 0, 0},  // x directions
+		{0, 1, 0}, {0, -1, 0},  // y directions
+		{0, 0, 1}, {0, 0, -1}   // z directions
+	};
+
+	// Initialize with the same grid size as background points
+	size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
+	size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
+	size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
+
+	// Check each point in the background grid
+	for (size_t i = 0; i < background_centres.size(); i++) {
+		// Skip points that are already inside the voxel grid
+		if (background_densities[i] > 0) {
+			continue;
+		}
+
+		// Get the grid coordinates for this point
+		int x = background_indices[i].x;
+		int y = background_indices[i].y;
+		int z = background_indices[i].z;
+
+		// Check all 6 adjacent neighbors
+		bool is_surface = false;
+		for (int dir = 0; dir < 6; dir++) {
+			int nx = x + directions[dir][0];
+			int ny = y + directions[dir][1];
+			int nz = z + directions[dir][2];
+
+			// Skip if neighbor is outside the grid
+			if (nx < 0 || nx >= static_cast<int>(x_res) ||
+				ny < 0 || ny >= static_cast<int>(y_res) ||
+				nz < 0 || nz >= static_cast<int>(z_res)) {
+				continue;
+			}
+
+			// Calculate the index of the neighboring point
+			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
+
+			// If the neighboring point is inside the voxel grid, this is a surface point
+			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0) {
+				is_surface = true;
+				break;
+			}
+		}
+
+		// If this is a surface point, add it to the surface collections
+		if (is_surface) {
+			background_surface_indices.push_back(background_indices[i]);
+			background_surface_centres.push_back(background_centres[i]);
+			background_surface_densities.push_back(0.5); // Use a different density value to distinguish from filled points
+		}
+	}
+
+	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
+}
 
 
 
