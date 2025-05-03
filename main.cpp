@@ -97,9 +97,7 @@ void draw_triangles(const std::vector<custom_math::vertex_3>& positions, const s
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-    //glm::mat4 model = glm::mat4(1.0f);
-    //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-    //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(main_camera.view_mat));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(main_camera.projection_mat));
@@ -252,6 +250,8 @@ int main(int argc, char** argv)
     voxel_grid.initialize(voxel_centres, voxel_densities);
 
     get_background_points(background_grid_points);
+  ///  get_surface_points(background_grid_points);
+
 
     glutInit(&argc, argv);
     init_opengl(win_x, win_y);
@@ -397,11 +397,13 @@ void draw_objects(void)
     positions.clear();
     colors.clear();
 
-    for (size_t i = 0; i < background_grid_points.size(); i++)
+    for (size_t i = 0; i < background_centres.size(); i++)
     {
-
-            positions.push_back(background_grid_points[i]);
-            colors.push_back(custom_math::vertex_3(1.0, 0.5, 0.0));
+        if (background_densities[i] > 0)
+        {
+            positions.push_back(background_centres[i]);
+            colors.push_back(custom_math::vertex_3(1, 0.5, 0));
+        }
     }
 
     draw_points(positions, colors, glm::mat4(1.0f));

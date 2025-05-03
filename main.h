@@ -108,7 +108,8 @@ vector<float> voxel_densities;
 
 vector<custom_math::vertex_3> background_grid_points;
 
-
+vector<custom_math::vertex_3> background_centres;
+vector<float> background_densities;
 
 
 
@@ -718,17 +719,22 @@ void get_background_points(vector<custom_math::vertex_3>& points)
 {
 	points.clear();
 
-	size_t res = 100;
+	size_t res = 50;
 
-	float x_grid_max = 20;
-	float y_grid_max = 20;
-	float z_grid_max = 20;
+	float x_grid_max = 10;
+	float y_grid_max = 10;
+	float z_grid_max = 10;
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
 	size_t x_res = res;
 	size_t y_res = res;
 	size_t z_res = res;
+
+
+
+	background_centres.resize(x_res*y_res*z_res);
+	background_densities.resize(x_res * y_res * z_res);
 
 	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
 	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
@@ -748,17 +754,25 @@ void get_background_points(vector<custom_math::vertex_3>& points)
 			{
 				custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
 
+				size_t index = x + (y * x_res) + (z * x_res * y_res);
+
 				size_t voxel_index = 0;
+
+				background_centres[index] = test_point;
 
 				if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) 
 				{
+					background_densities[index] = 1.0;
 					points.push_back(test_point);
+				}
+				else
+				{
+					background_densities[index] = 0.0;
 				}
 			}
 		}
 	}
 }
-
 
 
 
