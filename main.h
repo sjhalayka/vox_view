@@ -111,6 +111,7 @@ vector<float> voxel_densities;
 vector<glm::ivec3> background_indices;
 vector<custom_math::vertex_3> background_centres;
 vector<float> background_densities;
+vector<size_t> background_collisions;
 
 vector<glm::ivec3> background_surface_indices;
 vector<custom_math::vertex_3> background_surface_centres;
@@ -715,6 +716,18 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 
 
 
+
+void index_to_xyz(const size_t index, const size_t x_res, const size_t y_res, size_t& x, size_t& y, size_t& z) 
+{
+	z = index / (x_res * y_res);
+	
+	const size_t remainder = index % (x_res * y_res);
+
+	y = remainder / x_res;
+	x = remainder % x_res;
+}
+
+
 void get_background_points(void)
 {
 	size_t res = 50;
@@ -733,6 +746,7 @@ void get_background_points(void)
 	background_indices.resize(x_res * y_res * z_res);
 	background_centres.resize(x_res * y_res * z_res);
 	background_densities.resize(x_res * y_res * z_res);
+	background_collisions.resize(x_res * y_res * z_res);
 
 	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
 	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
@@ -754,6 +768,16 @@ void get_background_points(void)
 
 				size_t index = x + (y * x_res) + (z * x_res * y_res);
 
+				//size_t sx = 0, sy = 0, sz = 0;
+
+				//index_to_xyz(index, x_res, y_res, sx, sy, sz);
+
+				//cout << x << " " << sx << endl;
+				//cout << y << " " << sy << endl;
+				//cout << z << " " << sz << endl;
+				//cout << endl;
+
+
 				size_t voxel_index = 0;
 
 				background_centres[index] = test_point;
@@ -762,6 +786,7 @@ void get_background_points(void)
 				if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) 
 				{
 					background_densities[index] = 1.0;
+					background_collisions[index] = voxel_index;
 				}
 				else
 				{
