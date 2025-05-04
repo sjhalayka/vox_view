@@ -116,7 +116,7 @@ vector<size_t> background_collisions;
 vector<glm::ivec3> background_surface_indices;
 vector<custom_math::vertex_3> background_surface_centres;
 vector<float> background_surface_densities;
-
+vector<vector<size_t>> background_surface_collisions;
 
 
 // Add this to your header file
@@ -801,11 +801,6 @@ void get_background_points(void)
 
 void get_surface_points(void)
 {
-	// Clear any existing data
-	background_surface_indices.clear();
-	background_surface_centres.clear();
-	background_surface_densities.clear();
-
 	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
 	static const int directions[6][3] = {
 		{1, 0, 0}, {-1, 0, 0},  // x directions
@@ -818,6 +813,13 @@ void get_surface_points(void)
 	size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
 	size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
 
+	// Clear any existing data
+	background_surface_indices.clear();
+	background_surface_centres.clear();
+	background_surface_densities.clear();
+	background_surface_collisions.clear();
+	background_surface_collisions.resize(x_res * y_res * z_res);
+
 	// Check each point in the background grid
 	for (size_t i = 0; i < background_centres.size(); i++) {
 		// Skip points that are already inside the voxel grid
@@ -829,6 +831,8 @@ void get_surface_points(void)
 		int x = background_indices[i].x;
 		int y = background_indices[i].y;
 		int z = background_indices[i].z;
+
+		const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
 		// Check all 6 adjacent neighbors
 		bool is_surface = false;
@@ -848,21 +852,31 @@ void get_surface_points(void)
 			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
 
 			// If the neighboring point is inside the voxel grid, this is a surface point
-			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0) {
+			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0) 
+			{
 				is_surface = true;
-				break;
+
+				size_t collision = background_collisions[neighbor_index];
+
+				background_surface_collisions[index].push_back(collision);
+
+				//break;
 			}
 		}
 
 		// If this is a surface point, add it to the surface collections
-		if (is_surface) {
+		if (is_surface) 
+		{
+
+			//cout << background_surface_collisions[index].size() << endl;
+
 			background_surface_indices.push_back(background_indices[i]);
 			background_surface_centres.push_back(background_centres[i]);
-			background_surface_densities.push_back(0.5); // Use a different density value to distinguish from filled points
+			background_surface_densities.push_back(1.0); // Use a different density value to distinguish from filled points
 		}
 	}
 
-	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
+//	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
 }
 
 
