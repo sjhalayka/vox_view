@@ -821,9 +821,11 @@ void get_surface_points(void)
 	background_surface_collisions.resize(x_res * y_res * z_res);
 
 	// Check each point in the background grid
-	for (size_t i = 0; i < background_centres.size(); i++) {
+	for (size_t i = 0; i < background_centres.size(); i++) 
+	{
 		// Skip points that are already inside the voxel grid
-		if (background_densities[i] > 0) {
+		if (background_densities[i] > 0) 
+		{
 			continue;
 		}
 
@@ -835,8 +837,11 @@ void get_surface_points(void)
 		const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
 		// Check all 6 adjacent neighbors
+		
 		bool is_surface = false;
-		for (int dir = 0; dir < 6; dir++) {
+
+		for (int dir = 0; dir < 6; dir++) 
+		{
 			int nx = x + directions[dir][0];
 			int ny = y + directions[dir][1];
 			int nz = z + directions[dir][2];
@@ -867,7 +872,6 @@ void get_surface_points(void)
 		// If this is a surface point, add it to the surface collections
 		if (is_surface) 
 		{
-
 			//cout << background_surface_collisions[index].size() << endl;
 
 			background_surface_indices.push_back(background_indices[i]);
