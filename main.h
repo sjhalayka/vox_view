@@ -492,8 +492,6 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_colours.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 
-
-
 	for (size_t x = 0; x < scene->models[0]->size_x; x++)
 	{
 		for (size_t y = 0; y < scene->models[0]->size_y; y++)
@@ -530,11 +528,33 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				uint8_t a = colour.a;  // Alpha channel
 
 				voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+			}
+		}
+	}
+
+	for (size_t x = 0; x < scene->models[0]->size_x; x++)
+	{
+		for (size_t y = 0; y < scene->models[0]->size_y; y++)
+		{
+			for (size_t z = 0; z < scene->models[0]->size_z; z++)
+			{
+				float scale = 1.0;
+
+				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
+
+				glm::vec4 c = voxel_colours[voxel_index];
+				
+				float r = c.r * 255.0f;
+				float g = c.g * 255.0f;
+				float b = c.b * 255.0f;
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
 				size_t neighbour_index = 0;
 
+
+				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
+				
 				// Top face (y = 1.0f)
 				q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 				q0.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
@@ -612,7 +632,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y + 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (y == scene->models[0]->size_y - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (y == scene->models[0]->size_y - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q0.vertex[0];
 					t.vertex[1] = q0.vertex[1];
@@ -629,7 +649,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y - 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (y == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (y == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q1.vertex[0];
 					t.vertex[1] = q1.vertex[1];
@@ -646,7 +666,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + y * scene->models[0]->size_x + (z + 1) * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (z == scene->models[0]->size_z - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (z == scene->models[0]->size_z - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q2.vertex[0];
 					t.vertex[1] = q2.vertex[1];
@@ -663,7 +683,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y)*scene->models[0]->size_x + (z - 1) * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (z == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (z == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q3.vertex[0];
 					t.vertex[1] = q3.vertex[1];
@@ -680,7 +700,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = (x + 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
-				if (x == scene->models[0]->size_x - 1 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (x == scene->models[0]->size_x - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q4.vertex[0];
 					t.vertex[1] = q4.vertex[1];
@@ -696,7 +716,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = (x - 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
-				if (x == 0 || 0 == scene->models[0]->voxel_data[neighbour_index])
+				if (x == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q5.vertex[0];
 					t.vertex[1] = q5.vertex[1];
