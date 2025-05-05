@@ -104,6 +104,9 @@ vector<custom_math::triangle> tri_vec;
 custom_math::vertex_3 min_location, max_location;
 
 
+
+ogt_vox_scene* scene;
+
 vector<glm::ivec3> voxel_indices;
 vector<custom_math::vertex_3> voxel_centres;
 vector<float> voxel_densities;
@@ -120,7 +123,8 @@ vector<vector<size_t>> background_surface_collisions;
 
 
 // Add this to your header file
-struct VoxelGrid {
+struct VoxelGrid
+{
 	// Grid parameters
 	float voxel_size;
 	custom_math::vertex_3 grid_min;
@@ -142,7 +146,8 @@ struct VoxelGrid {
 		grid_min = voxel_centres[0];
 		grid_max = voxel_centres[0];
 
-		for (const auto& center : voxel_centres) {
+		for (const auto& center : voxel_centres) 
+		{
 			grid_min.x = std::min(grid_min.x, center.x - voxel_size / 2.0f);
 			grid_min.y = std::min(grid_min.y, center.y - voxel_size / 2.0f);
 			grid_min.z = std::min(grid_min.z, center.z - voxel_size / 2.0f);
@@ -430,9 +435,15 @@ bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math:
 	return true;
 }
 
-bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& tri_vec)
+
+
+
+
+
+bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec)
 {
 	tri_vec.clear();
+	voxel_indices.clear();
 	voxel_centres.clear();
 	voxel_densities.clear();
 
@@ -463,7 +474,7 @@ bool read_quads_from_vox_file(string file_name, vector<custom_math::triangle>& t
 	infile.read(reinterpret_cast<char*>(&v[0]), file_size);
 	infile.close();
 
-	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
+	scene = const_cast<ogt_vox_scene *>(ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size)));
 
 	voxel_indices.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);

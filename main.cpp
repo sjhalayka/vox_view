@@ -245,12 +245,11 @@ int main(int argc, char** argv)
 {
     cout << setprecision(20) << endl;
 
-    read_quads_from_vox_file("chr_knight.vox", tri_vec);
+   // read_scene_from_vox_file("chr_knight.vox");
 
+    get_triangles("chr_knight.vox", tri_vec);
     voxel_grid.initialize(voxel_centres, voxel_densities);
-
     get_background_points();
-
     get_surface_points();
 
   ///  get_surface_points(background_grid_points);
@@ -554,6 +553,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        get_triangles("chr_knight.vox", tri_vec);
+        voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
         break;
@@ -566,6 +567,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        get_triangles("chr_knight.vox", tri_vec);
+        voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
         break;
@@ -578,6 +581,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        get_triangles("chr_knight.vox", tri_vec);
+        voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
         break;
@@ -590,6 +595,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        get_triangles("chr_knight.vox", tri_vec);
+        voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
         break;
