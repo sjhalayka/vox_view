@@ -367,61 +367,61 @@ void centre_voxels_on_xyz(void)
 
 }
 
-
-
-void centre_mesh_on_xyz(void)
-{
-	return;
-
-	float x_min = numeric_limits<float>::max();
-	float y_min = numeric_limits<float>::max();
-	float z_min = numeric_limits<float>::max();
-	float x_max = -numeric_limits<float>::max();
-	float y_max = -numeric_limits<float>::max();
-	float z_max = -numeric_limits<float>::max();
-
-	for (size_t t = 0; t < tri_vec.size(); t++)
-	{
-		for (size_t j = 0; j < 3; j++)
-		{
-			if (tri_vec[t].vertex[j].x < x_min)
-				x_min = tri_vec[t].vertex[j].x;
-
-			if (tri_vec[t].vertex[j].x > x_max)
-				x_max = tri_vec[t].vertex[j].x;
-
-			if (tri_vec[t].vertex[j].y < y_min)
-				y_min = tri_vec[t].vertex[j].y;
-
-			if (tri_vec[t].vertex[j].y > y_max)
-				y_max = tri_vec[t].vertex[j].y;
-
-			if (tri_vec[t].vertex[j].z < z_min)
-				z_min = tri_vec[t].vertex[j].z;
-
-			if (tri_vec[t].vertex[j].z > z_max)
-				z_max = tri_vec[t].vertex[j].z;
-		}
-	}
-
-	for (size_t t = 0; t < tri_vec.size(); t++)
-	{
-		for (size_t j = 0; j < 3; j++)
-		{
-			tri_vec[t].vertex[j].x += -(x_max + x_min) / 2.0f;
-			tri_vec[t].vertex[j].y += -(y_max + y_min) / 2.0f;
-			tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
-		}
-	}
-
-	//for (size_t t = 0; t < voxel_centres.size(); t++)
-	//{
-	//	voxel_centres[t].x += -(x_max + x_min) / 2.0f;
-	//	voxel_centres[t].y += -(y_max + y_min) / 2.0f;
-	//	voxel_centres[t].z += -(z_max + z_min) / 2.0f;
-	//}
-
-}
+//
+//
+//void centre_mesh_on_xyz(void)
+//{
+//	return;
+//
+//	float x_min = numeric_limits<float>::max();
+//	float y_min = numeric_limits<float>::max();
+//	float z_min = numeric_limits<float>::max();
+//	float x_max = -numeric_limits<float>::max();
+//	float y_max = -numeric_limits<float>::max();
+//	float z_max = -numeric_limits<float>::max();
+//
+//	for (size_t t = 0; t < tri_vec.size(); t++)
+//	{
+//		for (size_t j = 0; j < 3; j++)
+//		{
+//			if (tri_vec[t].vertex[j].x < x_min)
+//				x_min = tri_vec[t].vertex[j].x;
+//
+//			if (tri_vec[t].vertex[j].x > x_max)
+//				x_max = tri_vec[t].vertex[j].x;
+//
+//			if (tri_vec[t].vertex[j].y < y_min)
+//				y_min = tri_vec[t].vertex[j].y;
+//
+//			if (tri_vec[t].vertex[j].y > y_max)
+//				y_max = tri_vec[t].vertex[j].y;
+//
+//			if (tri_vec[t].vertex[j].z < z_min)
+//				z_min = tri_vec[t].vertex[j].z;
+//
+//			if (tri_vec[t].vertex[j].z > z_max)
+//				z_max = tri_vec[t].vertex[j].z;
+//		}
+//	}
+//
+//	for (size_t t = 0; t < tri_vec.size(); t++)
+//	{
+//		for (size_t j = 0; j < 3; j++)
+//		{
+//			tri_vec[t].vertex[j].x += -(x_max + x_min) / 2.0f;
+//			tri_vec[t].vertex[j].y += -(y_max + y_min) / 2.0f;
+//			tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
+//		}
+//	}
+//
+//	//for (size_t t = 0; t < voxel_centres.size(); t++)
+//	//{
+//	//	voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+//	//	voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+//	//	voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+//	//}
+//
+//}
 
 bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math::triangle>& triangles, const char* const file_name)
 {
@@ -621,9 +621,9 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
-				unsigned char r = c.r * 255.0f;
-				unsigned char g = c.g * 255.0f;
-				unsigned char b = c.b * 255.0f;
+				unsigned char r = static_cast<unsigned char>(c.r * 255.0f);
+				unsigned char g = static_cast<unsigned char>(c.g * 255.0f);
+				unsigned char b = static_cast<unsigned char>(c.b * 255.0f);
 
 				size_t neighbour_index = 0;
 
