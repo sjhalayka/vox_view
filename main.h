@@ -742,7 +742,6 @@ void get_background_points(void)
 	size_t y_res = res;
 	size_t z_res = res;
 
-
 	background_indices.resize(x_res * y_res * z_res);
 	background_centres.resize(x_res * y_res * z_res);
 	background_densities.resize(x_res * y_res * z_res);
@@ -825,9 +824,7 @@ void get_surface_points(void)
 	{
 		// Skip points that are already inside the voxel grid
 		if (background_densities[i] > 0) 
-		{
 			continue;
-		}
 
 		// Get the grid coordinates for this point
 		int x = background_indices[i].x;
@@ -849,7 +846,8 @@ void get_surface_points(void)
 			// Skip if neighbor is outside the grid
 			if (nx < 0 || nx >= static_cast<int>(x_res) ||
 				ny < 0 || ny >= static_cast<int>(y_res) ||
-				nz < 0 || nz >= static_cast<int>(z_res)) {
+				nz < 0 || nz >= static_cast<int>(z_res)) 
+			{
 				continue;
 			}
 
@@ -861,11 +859,9 @@ void get_surface_points(void)
 			{
 				is_surface = true;
 
-				size_t collision = background_collisions[neighbor_index];
+				const size_t collision = background_collisions[neighbor_index];
 
 				background_surface_collisions[index].push_back(collision);
-
-				//break;
 			}
 		}
 
@@ -876,7 +872,7 @@ void get_surface_points(void)
 
 			background_surface_indices.push_back(background_indices[i]);
 			background_surface_centres.push_back(background_centres[i]);
-			background_surface_densities.push_back(1.0); // Use a different density value to distinguish from filled points
+			background_surface_densities.push_back(1.0);
 		}
 	}
 

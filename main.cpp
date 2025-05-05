@@ -380,36 +380,36 @@ void draw_objects(void)
     std::vector<custom_math::vertex_3> positions;
     std::vector<custom_math::vertex_3> colors;
 
-    for (size_t i = 0; i < voxel_centres.size(); i++)
-    {
-        if (voxel_densities[i] > 0)
-        {
-            positions.push_back(voxel_centres[i]);
-            colors.push_back(custom_math::vertex_3(1, 1, 1));
-        }
-    }
+    //for (size_t i = 0; i < voxel_centres.size(); i++)
+    //{
+    //    if (voxel_densities[i] > 0)
+    //    {
+    //        positions.push_back(voxel_centres[i]);
+    //        colors.push_back(custom_math::vertex_3(1, 1, 1));
+    //    }
+    //}
 
 
 
-    draw_points(positions, colors, model_matrix);
+    //draw_points(positions, colors, model_matrix);
 
 
 
 
 
-    positions.clear();
-    colors.clear();
+    //positions.clear();
+    //colors.clear();
 
-    for (size_t i = 0; i < background_centres.size(); i++)
-    {
-        if (background_densities[i] > 0)
-        {
-            positions.push_back(background_centres[i]);
-            colors.push_back(custom_math::vertex_3(1, 0.5, 0));
-        }
-    }
+    //for (size_t i = 0; i < background_centres.size(); i++)
+    //{
+    //    if (background_densities[i] > 0)
+    //    {
+    //        positions.push_back(background_centres[i]);
+    //        colors.push_back(custom_math::vertex_3(1, 0.5, 0));
+    //    }
+    //}
 
-    draw_points(positions, colors, glm::mat4(1.0f));
+    //draw_points(positions, colors, glm::mat4(1.0f));
 
 
 
