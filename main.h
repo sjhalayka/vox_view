@@ -322,8 +322,57 @@ void calc_AABB_min_max_locations(void)
 	max_location.z = z_max;
 }
 
+
+
+
+void centre_voxels_on_xyz(void)
+{
+	float x_min = numeric_limits<float>::max();
+	float y_min = numeric_limits<float>::max();
+	float z_min = numeric_limits<float>::max();
+	float x_max = -numeric_limits<float>::max();
+	float y_max = -numeric_limits<float>::max();
+	float z_max = -numeric_limits<float>::max();
+
+	for (size_t t = 0; t < voxel_centres.size(); t++)
+	{
+		if (voxel_densities[t] == 0)
+			continue;
+
+		if (voxel_centres[t].x < x_min)
+			x_min = voxel_centres[t].x;
+
+		if (voxel_centres[t].x > x_max)
+			x_max = voxel_centres[t].x;
+
+		if (voxel_centres[t].y < y_min)
+			y_min = voxel_centres[t].y;
+
+		if (voxel_centres[t].y > y_max)
+			y_max = voxel_centres[t].y;
+
+		if (voxel_centres[t].z < z_min)
+			z_min = voxel_centres[t].z;
+
+		if (voxel_centres[t].z > z_max)
+			z_max = voxel_centres[t].z;
+	}
+
+	for (size_t t = 0; t < voxel_centres.size(); t++)
+	{
+		voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+		voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+		voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+	}
+
+}
+
+
+
 void centre_mesh_on_xyz(void)
 {
+	return;
+
 	float x_min = numeric_limits<float>::max();
 	float y_min = numeric_limits<float>::max();
 	float z_min = numeric_limits<float>::max();
@@ -365,12 +414,12 @@ void centre_mesh_on_xyz(void)
 		}
 	}
 
-	for (size_t t = 0; t < voxel_centres.size(); t++)
-	{
-		voxel_centres[t].x += -(x_max + x_min) / 2.0f;
-		voxel_centres[t].y += -(y_max + y_min) / 2.0f;
-		voxel_centres[t].z += -(z_max + z_min) / 2.0f;
-	}
+	//for (size_t t = 0; t < voxel_centres.size(); t++)
+	//{
+	//	voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+	//	voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+	//	voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+	//}
 
 }
 
@@ -530,6 +579,14 @@ bool get_voxels(const char* file_name)
 
 	ogt_vox_destroy_scene(scene);
 
+	for (size_t i = 0; i < voxel_centres.size(); i++)
+	{
+		static const float pi = 4.0f * atanf(1.0f);
+		voxel_centres[i].rotate_x(pi - pi / 2.0f);
+	}
+
+	centre_voxels_on_xyz();
+
 	return true;
 }
 
@@ -537,6 +594,12 @@ bool get_voxels(const char* file_name)
 bool get_triangles(vector<custom_math::triangle>& tri_vec)
 {
 	tri_vec.clear();
+
+	for (size_t i = 0; i < voxel_centres.size(); i++)
+	{
+		static const float pi = 4.0f * atanf(1.0f);
+		voxel_centres[i].rotate_x(-(pi - pi / 2.0f));
+	}
 
 	for (size_t x = 0; x < voxel_x_res; x++)
 	{
@@ -745,6 +808,12 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 	cout << tri_vec.size() << endl;
 
+
+
+
+
+
+
 	for (size_t i = 0; i < tri_vec.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
@@ -757,14 +826,12 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 	for (size_t i = 0; i < voxel_centres.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
-
 		voxel_centres[i].rotate_x(pi - pi / 2.0f);
 	}
 
+//	centre_mesh_on_xyz();
 
-	centre_mesh_on_xyz();
-
-	calc_AABB_min_max_locations();
+//	calc_AABB_min_max_locations();
 
 	return true;
 }
