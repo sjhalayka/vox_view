@@ -541,20 +541,24 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				float scale = 1.0;
 
 				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
+				const custom_math::vertex_3 translate = voxel_centres[voxel_index];
+
+				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+
+				// Transparent
+				if (0 == voxel_densities[voxel_index])
+					continue;
 
 				glm::vec4 c = voxel_colours[voxel_index];
-				
-				float r = c.r * 255.0f;
-				float g = c.g * 255.0f;
-				float b = c.b * 255.0f;
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
+				unsigned char r = c.r * 255.0f;
+				unsigned char g = c.g * 255.0f;
+				unsigned char b = c.b * 255.0f;
+
 				size_t neighbour_index = 0;
 
-
-				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
-				
 				// Top face (y = 1.0f)
 				q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 				q0.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
