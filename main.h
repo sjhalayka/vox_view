@@ -105,11 +105,17 @@ custom_math::vertex_3 min_location, max_location;
 
 
 
-ogt_vox_scene* scene;
+
 
 vector<glm::ivec3> voxel_indices;
 vector<custom_math::vertex_3> voxel_centres;
 vector<float> voxel_densities;
+vector<glm::vec4> voxel_colours;
+size_t voxel_x_res;
+size_t voxel_y_res;
+size_t voxel_z_res;
+
+
 
 vector<glm::ivec3> background_indices;
 vector<custom_math::vertex_3> background_centres;
@@ -446,6 +452,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 	voxel_indices.clear();
 	voxel_centres.clear();
 	voxel_densities.clear();
+	voxel_colours.clear();
 
 	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
@@ -474,11 +481,18 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 	infile.read(reinterpret_cast<char*>(&v[0]), file_size);
 	infile.close();
 
-	scene = const_cast<ogt_vox_scene *>(ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size)));
+	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
+
+	voxel_x_res = scene->models[0]->size_x;
+	voxel_y_res = scene->models[0]->size_y;
+	voxel_z_res = scene->models[0]->size_z;
 
 	voxel_indices.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
 	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+	voxel_colours.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+
+
 
 	for (size_t x = 0; x < scene->models[0]->size_x; x++)
 	{
@@ -515,6 +529,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 				uint8_t b = colour.b;
 				uint8_t a = colour.a;  // Alpha channel
 
+				voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
@@ -699,7 +714,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 	ogt_vox_destroy_scene(scene);
 
-
+	cout << tri_vec.size() << endl;
 
 	for (size_t i = 0; i < tri_vec.size(); i++)
 	{
