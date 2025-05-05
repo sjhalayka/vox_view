@@ -487,20 +487,20 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 	voxel_y_res = scene->models[0]->size_y;
 	voxel_z_res = scene->models[0]->size_z;
 
-	voxel_indices.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
-	voxel_centres.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
-	voxel_densities.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
-	voxel_colours.resize(scene->models[0]->size_x * scene->models[0]->size_y * scene->models[0]->size_z);
+	voxel_indices.resize(voxel_x_res * voxel_y_res * voxel_z_res);
+	voxel_centres.resize(voxel_x_res * voxel_y_res * voxel_z_res);
+	voxel_densities.resize(voxel_x_res * voxel_y_res * voxel_z_res);
+	voxel_colours.resize(voxel_x_res * voxel_y_res * voxel_z_res);
 
-	for (size_t x = 0; x < scene->models[0]->size_x; x++)
+	for (size_t x = 0; x < voxel_x_res; x++)
 	{
-		for (size_t y = 0; y < scene->models[0]->size_y; y++)
+		for (size_t y = 0; y < voxel_y_res; y++)
 		{
-			for (size_t z = 0; z < scene->models[0]->size_z; z++)
+			for (size_t z = 0; z < voxel_z_res; z++)
 			{
 				float scale = 1.0;
 
-				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
+				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
 				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
 				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
@@ -532,20 +532,21 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 		}
 	}
 
-	for (size_t x = 0; x < scene->models[0]->size_x; x++)
+	ogt_vox_destroy_scene(scene);
+
+	for (size_t x = 0; x < voxel_x_res; x++)
 	{
-		for (size_t y = 0; y < scene->models[0]->size_y; y++)
+		for (size_t y = 0; y < voxel_y_res; y++)
 		{
-			for (size_t z = 0; z < scene->models[0]->size_z; z++)
+			for (size_t z = 0; z < voxel_z_res; z++)
 			{
 				float scale = 1.0;
 
-				const size_t voxel_index = x + (y * scene->models[0]->size_x) + (z * scene->models[0]->size_x * scene->models[0]->size_y);
+				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
 				const custom_math::vertex_3 translate = voxel_centres[voxel_index];
 
 				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
-				// Transparent
 				if (0 == voxel_densities[voxel_index])
 					continue;
 
@@ -635,8 +636,8 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y + 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (y == scene->models[0]->size_y - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + (y + 1) * voxel_x_res + z * voxel_x_res * voxel_y_res;
+				if (y == voxel_y_res - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q0.vertex[0];
 					t.vertex[1] = q0.vertex[1];
@@ -652,7 +653,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y - 1) * scene->models[0]->size_x + z * scene->models[0]->size_x * scene->models[0]->size_y;
+				neighbour_index = x + (y - 1) * voxel_x_res + z * voxel_x_res * voxel_y_res;
 				if (y == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q1.vertex[0];
@@ -669,8 +670,8 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + y * scene->models[0]->size_x + (z + 1) * scene->models[0]->size_x * scene->models[0]->size_y;
-				if (z == scene->models[0]->size_z - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + y * voxel_x_res + (z + 1) * voxel_x_res * voxel_y_res;
+				if (z == voxel_z_res - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q2.vertex[0];
 					t.vertex[1] = q2.vertex[1];
@@ -686,7 +687,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y)*scene->models[0]->size_x + (z - 1) * scene->models[0]->size_x * scene->models[0]->size_y;
+				neighbour_index = x + (y)*voxel_x_res + (z - 1) * voxel_x_res * voxel_y_res;
 				if (z == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q3.vertex[0];
@@ -703,8 +704,8 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = (x + 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
-				if (x == scene->models[0]->size_x - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = (x + 1) + (y)*voxel_x_res + (z)*voxel_x_res * voxel_y_res;
+				if (x == voxel_x_res - 1 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q4.vertex[0];
 					t.vertex[1] = q4.vertex[1];
@@ -719,7 +720,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = (x - 1) + (y)*scene->models[0]->size_x + (z)*scene->models[0]->size_x * scene->models[0]->size_y;
+				neighbour_index = (x - 1) + (y)*voxel_x_res + (z)*voxel_x_res * voxel_y_res;
 				if (x == 0 || 0 == voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q5.vertex[0];
@@ -736,7 +737,7 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 		}
 	}
 
-	ogt_vox_destroy_scene(scene);
+
 
 	cout << tri_vec.size() << endl;
 
