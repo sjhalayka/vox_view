@@ -247,7 +247,8 @@ int main(int argc, char** argv)
 
    // read_scene_from_vox_file("chr_knight.vox");
 
-    get_triangles("chr_knight.vox", tri_vec);
+    get_voxels("chr_knight.vox");
+    get_triangles(tri_vec);
     voxel_grid.initialize(voxel_centres, voxel_densities);
     get_background_points();
     get_surface_points();
@@ -553,7 +554,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles("chr_knight.vox", tri_vec);
+        get_voxels("chr_knight.vox");
+        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
@@ -567,7 +569,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles("chr_knight.vox", tri_vec);
+        get_voxels("chr_knight.vox");
+        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
@@ -581,7 +584,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles("chr_knight.vox", tri_vec);
+        get_voxels("chr_knight.vox");
+        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();
@@ -595,7 +599,8 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles("chr_knight.vox", tri_vec);
+        get_voxels("chr_knight.vox");
+        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities);
         get_background_points();
         get_surface_points();

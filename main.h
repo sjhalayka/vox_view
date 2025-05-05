@@ -443,12 +443,8 @@ bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math:
 
 
 
-
-
-
-bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec)
+bool get_voxels(const char* file_name)
 {
-	tri_vec.clear();
 	voxel_indices.clear();
 	voxel_centres.clear();
 	voxel_densities.clear();
@@ -533,6 +529,14 @@ bool get_triangles(const char *file_name, vector<custom_math::triangle>& tri_vec
 	}
 
 	ogt_vox_destroy_scene(scene);
+
+	return true;
+}
+
+
+bool get_triangles(vector<custom_math::triangle>& tri_vec)
+{
+	tri_vec.clear();
 
 	for (size_t x = 0; x < voxel_x_res; x++)
 	{
