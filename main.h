@@ -65,7 +65,6 @@ void mouse_func(int button, int state, int x, int y);
 void motion_func(int x, int y);
 void passive_motion_func(int x, int y);
 
-void render_string(int x, const int y, void* font, const string& text);
 void draw_objects(void);
 void cleanup(void);
 
@@ -99,6 +98,8 @@ int mouse_x = 0;
 int mouse_y = 0;
 
 
+vector<unsigned char> test_texture;
+
 const float cell_size = 1.0;
 
 // Triangles data
@@ -123,11 +124,11 @@ vector<custom_math::vertex_3> background_surface_centres;
 vector<float> background_surface_densities;
 vector<vector<size_t>> background_surface_collisions;
 
-size_t res = 50;
+const size_t res = 50;
 
-float x_grid_max = 10;
-float y_grid_max = 10;
-float z_grid_max = 10;
+const float x_grid_max = 10;
+const float y_grid_max = 10;
+const float z_grid_max = 10;
 
 
 
@@ -369,64 +370,8 @@ void centre_voxels_on_xyz(void)
 		voxel_centres[t].y += -(y_max + y_min) / 2.0f;
 		voxel_centres[t].z += -(z_max + z_min) / 2.0f;
 	}
-
 }
 
-//
-//
-//void centre_mesh_on_xyz(void)
-//{
-//	return;
-//
-//	float x_min = numeric_limits<float>::max();
-//	float y_min = numeric_limits<float>::max();
-//	float z_min = numeric_limits<float>::max();
-//	float x_max = -numeric_limits<float>::max();
-//	float y_max = -numeric_limits<float>::max();
-//	float z_max = -numeric_limits<float>::max();
-//
-//	for (size_t t = 0; t < tri_vec.size(); t++)
-//	{
-//		for (size_t j = 0; j < 3; j++)
-//		{
-//			if (tri_vec[t].vertex[j].x < x_min)
-//				x_min = tri_vec[t].vertex[j].x;
-//
-//			if (tri_vec[t].vertex[j].x > x_max)
-//				x_max = tri_vec[t].vertex[j].x;
-//
-//			if (tri_vec[t].vertex[j].y < y_min)
-//				y_min = tri_vec[t].vertex[j].y;
-//
-//			if (tri_vec[t].vertex[j].y > y_max)
-//				y_max = tri_vec[t].vertex[j].y;
-//
-//			if (tri_vec[t].vertex[j].z < z_min)
-//				z_min = tri_vec[t].vertex[j].z;
-//
-//			if (tri_vec[t].vertex[j].z > z_max)
-//				z_max = tri_vec[t].vertex[j].z;
-//		}
-//	}
-//
-//	for (size_t t = 0; t < tri_vec.size(); t++)
-//	{
-//		for (size_t j = 0; j < 3; j++)
-//		{
-//			tri_vec[t].vertex[j].x += -(x_max + x_min) / 2.0f;
-//			tri_vec[t].vertex[j].y += -(y_max + y_min) / 2.0f;
-//			tri_vec[t].vertex[j].z += -(z_max + z_min) / 2.0f;
-//		}
-//	}
-//
-//	//for (size_t t = 0; t < voxel_centres.size(); t++)
-//	//{
-//	//	voxel_centres[t].x += -(x_max + x_min) / 2.0f;
-//	//	voxel_centres[t].y += -(y_max + y_min) / 2.0f;
-//	//	voxel_centres[t].z += -(z_max + z_min) / 2.0f;
-//	//}
-//
-//}
 
 bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math::triangle>& triangles, const char* const file_name)
 {
@@ -953,6 +898,42 @@ void get_surface_points(void)
 //	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
 }
 
+
+
+
+void do_blackening(void)
+{
+	for (size_t x = 0; x < res; x++)
+	{
+		for (size_t y = 0; y < res; y++)
+		{
+			for (size_t z = 0; z < res; z++)
+			{
+				const size_t index = x + y * res + z * res * res;
+
+				if (background_surface_densities[index] == 0.0)
+					continue;
+
+				for (size_t i = 0; i < background_surface_collisions[index].size(); i++)
+				{
+					voxel_colours[background_surface_collisions[index][i]].r *= test_texture[index] / 255.0f;
+					voxel_colours[background_surface_collisions[index][i]].g *= test_texture[index] / 255.0f;
+					voxel_colours[background_surface_collisions[index][i]].b *= test_texture[index] / 255.0f;
+					voxel_colours[background_surface_collisions[index][i]].a = 1.0f;
+				}
+
+				//cout << background_surface_collisions[index].size() << endl;
+
+				//if (y >= voxel_y_res / 2)
+				//	test_texture[voxel_index] = 1.0;
+				//else
+				//	test_texture[voxel_index] = 0.0;
+			}
+		}
+	}
+
+
+}
 
 
 

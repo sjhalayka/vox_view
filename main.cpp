@@ -249,10 +249,31 @@ int main(int argc, char** argv)
     model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox");
 
-    get_triangles(tri_vec);
+    test_texture.resize(res * res * res, 0);
+
+    for (size_t x = 0; x < res; x++)
+    {
+        for (size_t y = 0; y < res; y++)
+        {
+            for (size_t z = 0; z < res; z++)
+            {
+                const size_t voxel_index = x + y * res + z * res * res;
+
+                if (y >= res / 2)
+                    test_texture[voxel_index] = 255;
+            }
+        }
+    }
+
+
     voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
     get_background_points();
     get_surface_points();
+
+    do_blackening();
+    get_triangles(tri_vec);
+
+
 
 
 
@@ -333,41 +354,6 @@ void reshape_func(int width, int height)
     glViewport(0, 0, win_x, win_y);
 
     main_camera.calculate_camera_matrices(win_x, win_y);
-}
-
-// Text drawing code originally from "GLUT Tutorial -- Bitmap Fonts and Orthogonal Projections" by A R Fernandes
-void render_string(int x, const int y, void* font, const string& text)
-{
-    glUseProgram(0); // Disable shaders for GLUT text rendering
-
-    // Setup orthographic projection for text rendering
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, win_x, 0, win_y);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glDisable(GL_DEPTH_TEST);
-
-    for (size_t i = 0; i < text.length(); i++)
-    {
-        glRasterPos2i(x, y);
-        glutBitmapCharacter(font, text[i]);
-        x += glutBitmapWidth(font, text[i]) + 1;
-    }
-
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
 }
 
 
@@ -487,44 +473,7 @@ void display_func(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Draw objects using modern OpenGL
     draw_objects();
-
-    // Draw UI text if enabled
-    if (true == draw_control_list)
-    {
-        // Set text color
-        glColor3d(control_list_colour.x, control_list_colour.y, control_list_colour.z);
-
-        size_t break_size = 22;
-        size_t start = 20;
-        ostringstream oss;
-
-        render_string(10, static_cast<int>(start), GLUT_BITMAP_HELVETICA_18, string("Mouse controls:"));
-        render_string(10, static_cast<int>(start + 1 * break_size), GLUT_BITMAP_HELVETICA_18, string("  LMB + drag: Rotate camera"));
-        render_string(10, static_cast<int>(start + 2 * break_size), GLUT_BITMAP_HELVETICA_18, string("  RMB + drag: Zoom camera"));
-
-        render_string(10, static_cast<int>(start + 4 * break_size), GLUT_BITMAP_HELVETICA_18, string("Keyboard controls:"));
-        render_string(10, static_cast<int>(start + 5 * break_size), GLUT_BITMAP_HELVETICA_18, string("  w: Draw axis"));
-        render_string(10, static_cast<int>(start + 6 * break_size), GLUT_BITMAP_HELVETICA_18, string("  e: Draw text"));
-        render_string(10, static_cast<int>(start + 7 * break_size), GLUT_BITMAP_HELVETICA_18, string("  u: Rotate camera +u"));
-        render_string(10, static_cast<int>(start + 8 * break_size), GLUT_BITMAP_HELVETICA_18, string("  i: Rotate camera -u"));
-        render_string(10, static_cast<int>(start + 9 * break_size), GLUT_BITMAP_HELVETICA_18, string("  o: Rotate camera +v"));
-        render_string(10, static_cast<int>(start + 10 * break_size), GLUT_BITMAP_HELVETICA_18, string("  p: Rotate camera -v"));
-
-        vec3 eye = main_camera.eye;
-        vec3 eye_norm = normalize(eye);
-
-        oss.clear();
-        oss.str("");
-        oss << "Camera position: " << eye.x << ' ' << eye.y << ' ' << eye.z;
-        render_string(10, static_cast<int>(win_y - 2 * break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
-
-        oss.clear();
-        oss.str("");
-        oss << "Camera position (normalized): " << eye_norm.x << ' ' << eye_norm.y << ' ' << eye_norm.z;
-        render_string(10, static_cast<int>(win_y - break_size), GLUT_BITMAP_HELVETICA_18, oss.str());
-    }
 
     glFlush();
     glutSwapBuffers();
