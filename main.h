@@ -123,6 +123,15 @@ vector<custom_math::vertex_3> background_surface_centres;
 vector<float> background_surface_densities;
 vector<vector<size_t>> background_surface_collisions;
 
+size_t res = 50;
+
+float x_grid_max = 10;
+float y_grid_max = 10;
+float z_grid_max = 10;
+
+
+
+
 
 // Add this to your header file
 struct VoxelGrid
@@ -802,11 +811,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 void get_background_points(void)
 {
-	size_t res = 50;
 
-	float x_grid_max = 10;
-	float y_grid_max = 10;
-	float z_grid_max = 10;
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
