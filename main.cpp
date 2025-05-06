@@ -344,7 +344,21 @@ void take_screenshot(size_t num_cams_wide, const char* filename, const bool reve
 
 int main(int argc, char** argv)
 {
-    cout << setprecision(20) << endl;
+
+
+    glutInit(&argc, argv);
+    init_opengl(win_x, win_y);
+
+    // Initialize GLEW after GLUT and context creation
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        cerr << "Error: " << glewGetErrorString(err) << endl;
+        return 1;
+    }
+
+
+
+
 
     model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox");
@@ -378,16 +392,6 @@ int main(int argc, char** argv)
 
 
 
-
-    glutInit(&argc, argv);
-    init_opengl(win_x, win_y);
-
-    // Initialize GLEW after GLUT and context creation
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        cerr << "Error: " << glewGetErrorString(err) << endl;
-        return 1;
-    }
 
     glutReshapeFunc(reshape_func);
     glutIdleFunc(idle_func);
