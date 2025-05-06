@@ -99,6 +99,9 @@ bool rmb_down = false;
 int mouse_x = 0;
 int mouse_y = 0;
 
+
+const float cell_size = 1.0;
+
 // Triangles data
 vector<custom_math::triangle> tri_vec;
 //custom_math::vertex_3 min_location, max_location;
@@ -229,8 +232,8 @@ struct VoxelGrid
 			point.y >= center.y - half_size &&
 			point.y <= center.y + half_size &&
 			point.z >= center.z - half_size &&
-			point.z <= center.z + half_size) {
-
+			point.z <= center.z + half_size) 
+		{
 			voxel_index = voxel_idx;
 			return true;
 		}
@@ -537,12 +540,10 @@ bool get_voxels(const char* file_name)
 		{
 			for (size_t z = 0; z < voxel_z_res; z++)
 			{
-				float scale = 1.0;
-
 				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
 				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
-				custom_math::vertex_3 translate(x * scale, y * scale, z * scale);
+				custom_math::vertex_3 translate(x * cell_size, y * cell_size, z * cell_size);
 
 				voxel_centres[voxel_index] = translate;
 				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
@@ -601,8 +602,6 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 		{
 			for (size_t z = 0; z < voxel_z_res; z++)
 			{
-				float scale = 1.0;
-
 				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
 				const custom_math::vertex_3 translate = voxel_centres[voxel_index];
 
@@ -611,51 +610,47 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 				if (0 == voxel_densities[voxel_index])
 					continue;
 
-				glm::vec4 c = voxel_colours[voxel_index];
-
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
-
-
 				// Top face (y = 1.0f)
-				q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-				q0.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-				q0.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-				q0.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
+				q0.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q0.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q0.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q0.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
 
-				// Bottom face (y = -scale*0.5f)
-				q1.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-				q1.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-				q1.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-				q1.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				// Bottom face (y = -cell_size*0.5f)
+				q1.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q1.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q1.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q1.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
 
-				// Front face  (z = scale*0.5f)
-				q2.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-				q2.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-				q2.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-				q2.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
+				// Front face  (z = cell_size*0.5f)
+				q2.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q2.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q2.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q2.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
 
-				// Back face (z = -scale*0.5f)
-				q3.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-				q3.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-				q3.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-				q3.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
+				// Back face (z = -cell_size*0.5f)
+				q3.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q3.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q3.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q3.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
 
-				// Right face (x = scale*0.5f)
-				q4.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-				q4.vertex[1] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-				q4.vertex[2] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-				q4.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
+				// Right face (x = cell_size*0.5f)
+				q4.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q4.vertex[1] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q4.vertex[2] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q4.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
 
-				// Left face (x = -scale*0.5f)
-				q5.vertex[0] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
-				q5.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
-				q5.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-				q5.vertex[3] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-
+				// Left face (x = -cell_size*0.5f)
+				q5.vertex[0] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q5.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q5.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				q5.vertex[3] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
 
 				custom_math::triangle t;
 
+				const glm::vec4 c = voxel_colours[voxel_index];
 				t.colour.x = c.r;
 				t.colour.y = c.g;
 				t.colour.z = c.b;
@@ -796,15 +791,15 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 
 
-void index_to_xyz(const size_t index, const size_t x_res, const size_t y_res, size_t& x, size_t& y, size_t& z) 
-{
-	z = index / (x_res * y_res);
-	
-	const size_t remainder = index % (x_res * y_res);
-
-	y = remainder / x_res;
-	x = remainder % x_res;
-}
+//void index_to_xyz(const size_t index, const size_t x_res, const size_t y_res, size_t& x, size_t& y, size_t& z) 
+//{
+//	z = index / (x_res * y_res);
+//	
+//	const size_t remainder = index % (x_res * y_res);
+//
+//	y = remainder / x_res;
+//	x = remainder % x_res;
+//}
 
 
 void get_background_points(void)
@@ -842,19 +837,9 @@ void get_background_points(void)
 
 			for (size_t y = 0; y < y_res; y++, Z.y += y_step_size)
 			{
-				custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
+				const custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
 
-				size_t index = x + (y * x_res) + (z * x_res * y_res);
-
-				//size_t sx = 0, sy = 0, sz = 0;
-
-				//index_to_xyz(index, x_res, y_res, sx, sy, sz);
-
-				//cout << x << " " << sx << endl;
-				//cout << y << " " << sy << endl;
-				//cout << z << " " << sz << endl;
-				//cout << endl;
-
+				const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
 				size_t voxel_index = 0;
 
@@ -887,9 +872,9 @@ void get_surface_points(void)
 	};
 
 	// Initialize with the same grid size as background points
-	size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
-	size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
-	size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
+	const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
+	const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
+	const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
 
 	// Clear any existing data
 	background_surface_indices.clear();
@@ -906,9 +891,9 @@ void get_surface_points(void)
 			continue;
 
 		// Get the grid coordinates for this point
-		int x = background_indices[i].x;
-		int y = background_indices[i].y;
-		int z = background_indices[i].z;
+		const int x = background_indices[i].x;
+		const int y = background_indices[i].y;
+		const int z = background_indices[i].z;
 
 		const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
@@ -918,9 +903,9 @@ void get_surface_points(void)
 
 		for (int dir = 0; dir < 6; dir++) 
 		{
-			int nx = x + directions[dir][0];
-			int ny = y + directions[dir][1];
-			int nz = z + directions[dir][2];
+			const int nx = x + directions[dir][0];
+			const int ny = y + directions[dir][1];
+			const int nz = z + directions[dir][2];
 
 			// Skip if neighbor is outside the grid
 			if (nx < 0 || nx >= static_cast<int>(x_res) ||

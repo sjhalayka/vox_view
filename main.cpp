@@ -246,12 +246,15 @@ int main(int argc, char** argv)
     cout << setprecision(20) << endl;
 
 
+    model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox");
 
     get_triangles(tri_vec);
-    voxel_grid.initialize(voxel_centres, voxel_densities);
+    voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
     get_background_points();
     get_surface_points();
+
+
 
 
     glutInit(&argc, argv);
