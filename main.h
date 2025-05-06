@@ -124,7 +124,12 @@ vector<custom_math::vertex_3> background_surface_centres;
 vector<float> background_surface_densities;
 vector<vector<size_t>> background_surface_collisions;
 
-const size_t res = 50;
+
+
+
+const size_t x_res = 50;
+const size_t y_res = 50;
+const size_t z_res = 50;
 
 const float x_grid_max = 10;
 const float y_grid_max = 10;
@@ -760,9 +765,7 @@ void get_background_points(void)
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
-	size_t x_res = res;
-	size_t y_res = res;
-	size_t z_res = res;
+
 
 	background_indices.resize(x_res * y_res * z_res);
 	background_centres.resize(x_res * y_res * z_res);
@@ -903,13 +906,13 @@ void get_surface_points(void)
 
 void do_blackening(void)
 {
-	for (size_t x = 0; x < res; x++)
+	for (size_t x = 0; x < x_res; x++)
 	{
-		for (size_t y = 0; y < res; y++)
+		for (size_t y = 0; y < y_res; y++)
 		{
-			for (size_t z = 0; z < res; z++)
+			for (size_t z = 0; z < z_res; z++)
 			{
-				const size_t index = x + y * res + z * res * res;
+				const size_t index = x + y * x_res + z * x_res * y_res;
 
 				if (background_surface_densities[index] == 0.0)
 					continue;

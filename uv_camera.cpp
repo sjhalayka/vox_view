@@ -10,10 +10,10 @@
 uv_camera::uv_camera(void)
 {
 	u = v = 0;
-	w = 5;
+	w = 2;
 	fov = 45.0f;
-	near_plane = 0.0001f;
-	far_plane = 1000.0f;
+	near_plane = 0.01f;
+	far_plane = 100.0f;
 	win_x = win_y = 0;
 
 	transform();
@@ -51,12 +51,7 @@ void uv_camera::transform(void)
 	rotate();
 	translate();
 
-
-	if (win_y == 0)
-	{
-		projection_mat = mat4(1.0f);
-	}
-	else
+	if (win_y > 0)
 	{
 		projection_mat = perspective(
 			glm::radians(fov),
@@ -84,7 +79,6 @@ void uv_camera::reset(void)
 }
 
 
-
 vec3 rotate_x(vec3 v, const float& radians)
 {
 	float t_y = v.y;
@@ -105,7 +99,6 @@ vec3  rotate_y(vec3 v, const float& radians)
 	return v;
 }
 
-
 void uv_camera::rotate(void)
 {
 	// Rotate about the world x axis
@@ -116,6 +109,7 @@ void uv_camera::rotate(void)
 	look_at = rotate_y(look_at, v);
 	up = rotate_y(up, v);
 }
+
 
 void uv_camera::translate(void)
 {
