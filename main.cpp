@@ -242,8 +242,6 @@ void draw_points(const std::vector<custom_math::vertex_3>& positions, const std:
 
 bool screenshot_mode = false;
 
-
-
 void take_screenshot(size_t num_cams_wide, const char* filename, const bool reverse_rows = false)
 {
     screenshot_mode = true;
@@ -289,8 +287,6 @@ void take_screenshot(size_t num_cams_wide, const char* filename, const bool reve
 
             // Set up camera, draw, then copy the frame buffer.
             main_camera.Set_Large_Screenshot(num_cams_wide, cam_num_x, cam_num_y, win_x, win_y);
-
-
 
             display_func();
             glReadPixels(0, 0, win_x, win_y, GL_RGB, GL_UNSIGNED_BYTE, &fbpixels[0]);
@@ -368,6 +364,7 @@ int main(int argc, char** argv)
             }
         }
     }
+
 
 
     voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
@@ -618,10 +615,18 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+
+		std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
+
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         get_triangles(tri_vec);
+
+        std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
+
+        cout << elapsed.count() / 1000.0f << endl;
 
         break;
     }
@@ -633,10 +638,17 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
+
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         get_triangles(tri_vec);
+
+        std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
+
+        cout << elapsed.count() / 1000.0f << endl;
         break;
     }
     case 'k':
@@ -647,10 +659,17 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
+
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         get_triangles(tri_vec);
+
+        std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
+
+        cout << elapsed.count() / 1000.0f << endl;
         break;
     }
     case 'l':
@@ -661,10 +680,17 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
+        std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
+
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         get_triangles(tri_vec);
+
+        std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
+
+        cout << elapsed.count() / 1000.0f << endl;
         break;
     }
 

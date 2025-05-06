@@ -17,37 +17,19 @@
 #include <GL/glut.h>
 
 #include <iostream>
-using std::cout;
-using std::endl;
-
 #include <iomanip>
-using std::setprecision;
-
 #include <vector>
-using std::vector;
-
 #include <string>
-using std::string;
-
 #include <sstream>
-using std::ostringstream;
-using std::istringstream;
-
 #include <fstream>
-using std::ofstream;
-using std::ifstream;
-
 #include <set>
-using std::set;
-
 #include <map>
-using std::map;
-
 #include <utility>
-using std::pair;
-
 #include <ios>
+#include <chrono>
 using namespace std;
+
+
 
 // OpenGL 4 additions
 struct Vertex {
@@ -126,10 +108,10 @@ vector<vector<size_t>> background_surface_collisions;
 
 
 
-
-const size_t x_res = 50;
-const size_t y_res = 50;
-const size_t z_res = 50;
+ 
+const size_t x_res = 250;
+const size_t y_res = 250;
+const size_t z_res = 250;
 
 const float x_grid_max = 10;
 const float y_grid_max = 10;
