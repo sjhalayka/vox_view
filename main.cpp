@@ -570,7 +570,7 @@ void draw_objects(void)
 
 
 
-
+ 
 
 
 void display_func(void)
@@ -618,10 +618,11 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
+        get_triangles(tri_vec);
+
         break;
     }
     case 'p':
@@ -632,10 +633,10 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
+        get_triangles(tri_vec);
         break;
     }
     case 'k':
@@ -646,10 +647,10 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
+        get_triangles(tri_vec);
         break;
     }
     case 'l':
@@ -660,10 +661,10 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        get_triangles(tri_vec);
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
+        get_triangles(tri_vec);
         break;
     }
 
