@@ -14,8 +14,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include <cstdlib>
-#include <GL/glew.h>        // GLEW before GLUT
-#include <GL/glut.h>        // GLUT Library
+#include <GL/glut.h>
 
 #include <iostream>
 using std::cout;
@@ -72,7 +71,7 @@ void cleanup(void);
 
 
 // Global variables
-custom_math::vector_3 background_colour(0.0f, 0.0f, 0.0f);
+custom_math::vector_3 background_colour(0.5f, 0.5f, 0.5f);
 custom_math::vector_3 control_list_colour(1.0f, 1.0f, 1.0f);
 
 bool draw_axis = true;
@@ -561,11 +560,10 @@ bool get_voxels(const char* file_name)
 
 				const ogt_vox_rgba colour = scene->palette.color[colour_index];
 
-				// Now you can use the individual components
 				uint8_t r = colour.r;
 				uint8_t g = colour.g;
 				uint8_t b = colour.b;
-				uint8_t a = colour.a;  // Alpha channel
+				uint8_t a = colour.a;
 
 				voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 			}
@@ -878,8 +876,11 @@ void get_surface_points(void)
 
 	// Clear any existing data
 	background_surface_indices.clear();
+	background_surface_indices.resize(x_res * y_res * z_res);
 	background_surface_centres.clear();
+	background_surface_centres.resize(x_res * y_res * z_res);
 	background_surface_densities.clear();
+	background_surface_densities.resize(x_res * y_res * z_res);
 	background_surface_collisions.clear();
 	background_surface_collisions.resize(x_res * y_res * z_res);
 
@@ -929,14 +930,18 @@ void get_surface_points(void)
 			}
 		}
 
-		// If this is a surface point, add it to the surface collections
+
+		background_surface_indices[index] = background_indices[i];
+		background_surface_centres[index] = background_centres[i];
+
 		if (is_surface) 
 		{
 			//cout << background_surface_collisions[index].size() << endl;
-
-			background_surface_indices.push_back(background_indices[i]);
-			background_surface_centres.push_back(background_centres[i]);
-			background_surface_densities.push_back(1.0);
+			background_surface_densities[index] = 1.0;
+		}
+		else
+		{
+			background_surface_densities[index] = 0.0;
 		}
 	}
 

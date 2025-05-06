@@ -419,8 +419,11 @@ void draw_objects(void)
 
     for (size_t i = 0; i < background_surface_centres.size(); i++)
     {
-        positions.push_back(background_surface_centres[i]);
-        colors.push_back(custom_math::vertex_3(0, 1, 1)); // Use a distinct color like cyan
+        if (background_surface_densities[i] > 0)
+        {
+            positions.push_back(background_surface_centres[i]);
+            colors.push_back(custom_math::vertex_3(0, 1, 1)); // Use a distinct color like cyan
+        }
     }
 
     draw_points(positions, colors, glm::mat4(1.0f));
@@ -556,7 +559,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_triangles(tri_vec);
-        voxel_grid.initialize(voxel_centres, voxel_densities);
+        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         break;
@@ -570,7 +573,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_triangles(tri_vec);
-        voxel_grid.initialize(voxel_centres, voxel_densities);
+        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         break;
@@ -584,7 +587,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_triangles(tri_vec);
-        voxel_grid.initialize(voxel_centres, voxel_densities);
+        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         break;
@@ -598,7 +601,7 @@ void keyboard_func(unsigned char key, int x, int y)
         model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         get_triangles(tri_vec);
-        voxel_grid.initialize(voxel_centres, voxel_densities);
+        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
         get_surface_points();
         break;
