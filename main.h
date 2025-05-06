@@ -101,11 +101,7 @@ int mouse_y = 0;
 
 // Triangles data
 vector<custom_math::triangle> tri_vec;
-custom_math::vertex_3 min_location, max_location;
-
-
-
-
+//custom_math::vertex_3 min_location, max_location;
 
 vector<glm::ivec3> voxel_indices;
 vector<custom_math::vertex_3> voxel_centres;
@@ -114,8 +110,6 @@ vector<glm::vec4> voxel_colours;
 size_t voxel_x_res;
 size_t voxel_y_res;
 size_t voxel_z_res;
-
-
 
 vector<glm::ivec3> background_indices;
 vector<custom_math::vertex_3> background_centres;
@@ -279,48 +273,48 @@ VoxelGrid voxel_grid;
 glm::mat4 model_matrix = glm::mat4(1.0f);
 float u = 0.0f, v = 0.0f;
 
-
-void calc_AABB_min_max_locations(void)
-{
-	float x_min = numeric_limits<float>::max();
-	float y_min = numeric_limits<float>::max();
-	float z_min = numeric_limits<float>::max();
-	float x_max = -numeric_limits<float>::max();
-	float y_max = -numeric_limits<float>::max();
-	float z_max = -numeric_limits<float>::max();
-
-	for (size_t t = 0; t < tri_vec.size(); t++)
-	{
-		for (size_t j = 0; j < 3; j++)
-		{
-			if (tri_vec[t].vertex[j].x < x_min)
-				x_min = tri_vec[t].vertex[j].x;
-
-			if (tri_vec[t].vertex[j].x > x_max)
-				x_max = tri_vec[t].vertex[j].x;
-
-			if (tri_vec[t].vertex[j].y < y_min)
-				y_min = tri_vec[t].vertex[j].y;
-
-			if (tri_vec[t].vertex[j].y > y_max)
-				y_max = tri_vec[t].vertex[j].y;
-
-			if (tri_vec[t].vertex[j].z < z_min)
-				z_min = tri_vec[t].vertex[j].z;
-
-			if (tri_vec[t].vertex[j].z > z_max)
-				z_max = tri_vec[t].vertex[j].z;
-		}
-	}
-
-	min_location.x = x_min;
-	min_location.y = y_min;
-	min_location.z = z_min;
-
-	max_location.x = x_max;
-	max_location.y = y_max;
-	max_location.z = z_max;
-}
+//
+//void calc_AABB_min_max_locations(void)
+//{
+//	float x_min = numeric_limits<float>::max();
+//	float y_min = numeric_limits<float>::max();
+//	float z_min = numeric_limits<float>::max();
+//	float x_max = -numeric_limits<float>::max();
+//	float y_max = -numeric_limits<float>::max();
+//	float z_max = -numeric_limits<float>::max();
+//
+//	for (size_t t = 0; t < tri_vec.size(); t++)
+//	{
+//		for (size_t j = 0; j < 3; j++)
+//		{
+//			if (tri_vec[t].vertex[j].x < x_min)
+//				x_min = tri_vec[t].vertex[j].x;
+//
+//			if (tri_vec[t].vertex[j].x > x_max)
+//				x_max = tri_vec[t].vertex[j].x;
+//
+//			if (tri_vec[t].vertex[j].y < y_min)
+//				y_min = tri_vec[t].vertex[j].y;
+//
+//			if (tri_vec[t].vertex[j].y > y_max)
+//				y_max = tri_vec[t].vertex[j].y;
+//
+//			if (tri_vec[t].vertex[j].z < z_min)
+//				z_min = tri_vec[t].vertex[j].z;
+//
+//			if (tri_vec[t].vertex[j].z > z_max)
+//				z_max = tri_vec[t].vertex[j].z;
+//		}
+//	}
+//
+//	min_location.x = x_min;
+//	min_location.y = y_min;
+//	min_location.z = z_min;
+//
+//	max_location.x = x_max;
+//	max_location.y = y_max;
+//	max_location.z = z_max;
+//}
 
 
 
@@ -621,11 +615,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
-				unsigned char r = static_cast<unsigned char>(c.r * 255.0f);
-				unsigned char g = static_cast<unsigned char>(c.g * 255.0f);
-				unsigned char b = static_cast<unsigned char>(c.b * 255.0f);
 
-				size_t neighbour_index = 0;
 
 				// Top face (y = 1.0f)
 				q0.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
@@ -633,19 +623,11 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 				q0.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
 				q0.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
 
-				q0.colour.x = r / 255.0f;
-				q0.colour.y = g / 255.0f;
-				q0.colour.z = b / 255.0f;
-
 				// Bottom face (y = -scale*0.5f)
 				q1.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 				q1.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 				q1.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
 				q1.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-
-				q1.colour.x = r / 255.0f;
-				q1.colour.y = g / 255.0f;
-				q1.colour.z = b / 255.0f;
 
 				// Front face  (z = scale*0.5f)
 				q2.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
@@ -653,53 +635,32 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 				q2.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 				q2.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 
-				q2.colour.x = r / 255.0f;
-				q2.colour.y = g / 255.0f;
-				q2.colour.z = b / 255.0f;
-
 				// Back face (z = -scale*0.5f)
 				q3.vertex[0] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
 				q3.vertex[1] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
 				q3.vertex[2] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 				q3.vertex[3] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 
-				q3.colour.x = r / 255.0f;
-				q3.colour.y = g / 255.0f;
-				q3.colour.z = b / 255.0f;
-
 				// Right face (x = scale*0.5f)
 				q4.vertex[0] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 				q4.vertex[1] = custom_math::vertex_3(scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
 				q4.vertex[2] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
 				q4.vertex[3] = custom_math::vertex_3(scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
-				q4.vertex[0].nx = 1;
-				q4.vertex[1].nx = 1;
-				q4.vertex[2].nx = 1;
-				q4.vertex[3].nx = 1;
-
-				q4.colour.x = r / 255.0f;
-				q4.colour.y = g / 255.0f;
-				q4.colour.z = b / 255.0f;
 
 				// Left face (x = -scale*0.5f)
 				q5.vertex[0] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, scale * 0.5f) + translate;
 				q5.vertex[1] = custom_math::vertex_3(-scale * 0.5f, scale * 0.5f, -scale * 0.5f) + translate;
 				q5.vertex[2] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, -scale * 0.5f) + translate;
 				q5.vertex[3] = custom_math::vertex_3(-scale * 0.5f, -scale * 0.5f, scale * 0.5f) + translate;
-				q5.vertex[0].nx = -1;
-				q5.vertex[1].nx = -1;
-				q5.vertex[2].nx = -1;
-				q5.vertex[3].nx = -1;
 
-				q5.colour.x = r / 255.0f;
-				q5.colour.y = g / 255.0f;
-				q5.colour.z = b / 255.0f;
 
 				custom_math::triangle t;
 
-				t.colour.x = r / 255.0f;
-				t.colour.y = g / 255.0f;
-				t.colour.z = b / 255.0f;
+				t.colour.x = c.r;
+				t.colour.y = c.g;
+				t.colour.z = c.b;
+
+				size_t neighbour_index = 0;
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
@@ -817,7 +778,6 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 	for (size_t i = 0; i < tri_vec.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
-
 		tri_vec[i].vertex[0].rotate_x(pi - pi / 2.0f);
 		tri_vec[i].vertex[1].rotate_x(pi - pi / 2.0f);
 		tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
@@ -829,9 +789,6 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 		voxel_centres[i].rotate_x(pi - pi / 2.0f);
 	}
 
-//	centre_mesh_on_xyz();
-
-//	calc_AABB_min_max_locations();
 
 	return true;
 }

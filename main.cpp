@@ -247,6 +247,7 @@ int main(int argc, char** argv)
 
 
     get_voxels("chr_knight.vox");
+
     get_triangles(tri_vec);
     voxel_grid.initialize(voxel_centres, voxel_densities);
     get_background_points();
