@@ -743,11 +743,9 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 void get_background_points(void)
 {
-
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
-
 
 	background_indices.resize(x_res * y_res * z_res);
 	background_centres.resize(x_res * y_res * z_res);
@@ -791,12 +789,7 @@ void get_background_points(void)
 			}
 		}
 	}
-}
 
-
-
-void get_surface_points(void)
-{
 	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
 	static const int directions[6][3] = {
 		{1, 0, 0}, {-1, 0, 0},  // x directions
@@ -805,9 +798,9 @@ void get_surface_points(void)
 	};
 
 	// Initialize with the same grid size as background points
-	const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
-	const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
-	const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
+	//const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
+	//const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
+	//const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
 
 	// Clear any existing data
 	background_surface_indices.clear();
@@ -820,10 +813,10 @@ void get_surface_points(void)
 	background_surface_collisions.resize(x_res * y_res * z_res);
 
 	// Check each point in the background grid
-	for (size_t i = 0; i < background_centres.size(); i++) 
+	for (size_t i = 0; i < background_centres.size(); i++)
 	{
 		// Skip points that are already inside the voxel grid
-		if (background_densities[i] > 0) 
+		if (background_densities[i] > 0)
 			continue;
 
 		// Get the grid coordinates for this point
@@ -834,10 +827,10 @@ void get_surface_points(void)
 		const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
 		// Check all 6 adjacent neighbors
-		
+
 		bool is_surface = false;
 
-		for (int dir = 0; dir < 6; dir++) 
+		for (int dir = 0; dir < 6; dir++)
 		{
 			const int nx = x + directions[dir][0];
 			const int ny = y + directions[dir][1];
@@ -846,7 +839,7 @@ void get_surface_points(void)
 			// Skip if neighbor is outside the grid
 			if (nx < 0 || nx >= static_cast<int>(x_res) ||
 				ny < 0 || ny >= static_cast<int>(y_res) ||
-				nz < 0 || nz >= static_cast<int>(z_res)) 
+				nz < 0 || nz >= static_cast<int>(z_res))
 			{
 				continue;
 			}
@@ -855,7 +848,7 @@ void get_surface_points(void)
 			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
 
 			// If the neighboring point is inside the voxel grid, this is a surface point
-			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0) 
+			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0)
 			{
 				is_surface = true;
 
@@ -869,7 +862,7 @@ void get_surface_points(void)
 		background_surface_indices[index] = background_indices[i];
 		background_surface_centres[index] = background_centres[i];
 
-		if (is_surface) 
+		if (is_surface)
 		{
 			//cout << background_surface_collisions[index].size() << endl;
 			background_surface_densities[index] = 1.0;
@@ -879,6 +872,15 @@ void get_surface_points(void)
 			background_surface_densities[index] = 0.0;
 		}
 	}
+
+
+}
+
+
+
+void get_surface_points(void)
+{
+
 
 //	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
 }

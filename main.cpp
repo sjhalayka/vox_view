@@ -383,7 +383,6 @@ int main(int argc, char** argv)
 
     voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
     get_background_points();
-    get_surface_points();
 
     do_blackening();
     get_triangles(tri_vec);
@@ -624,7 +623,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
-        get_surface_points();
+
         get_triangles(tri_vec);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
@@ -646,7 +645,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
-        get_surface_points();
+
         get_triangles(tri_vec);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
@@ -667,7 +666,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
-        get_surface_points();
+
         get_triangles(tri_vec);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
@@ -688,7 +687,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
         get_background_points();
-        get_surface_points();
+
         get_triangles(tri_vec);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
