@@ -357,11 +357,11 @@ int main(int argc, char** argv)
     }
 
 
+    
 
 
-
-    model_matrix = glm::mat4(1.0f);
-    get_voxels("chr_knight.vox");
+    vo.model_matrix = glm::mat4(1.0f);
+    get_voxels("chr_knight.vox", vo);
 
     test_texture.resize(x_res * y_res * z_res, 0);
 
@@ -381,11 +381,11 @@ int main(int argc, char** argv)
 
 
 
-    voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
-    get_background_points();
+    vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+    get_background_points(vo);
 
-    do_blackening();
-    get_triangles(tri_vec);
+    do_blackening(vo);
+    get_triangles(vo.tri_vec, vo);
 
 
 
@@ -507,11 +507,11 @@ void draw_objects(void)
     positions.clear();
     colors.clear();
 
-    for (size_t i = 0; i < background_surface_centres.size(); i++)
+    for (size_t i = 0; i < vo.background_surface_centres.size(); i++)
     {
-        if (background_surface_densities[i] > 0)
+        if (vo.background_surface_densities[i] > 0)
         {
-            positions.push_back(background_surface_centres[i]);
+            positions.push_back(vo.background_surface_centres[i]);
             colors.push_back(custom_math::vertex_3(0, 1, 1)); // Use a distinct color like cyan
         }
     }
@@ -526,7 +526,7 @@ void draw_objects(void)
 		positions.clear();
 		colors.clear();
 
-		for (const auto& tri : tri_vec)
+		for (const auto& tri : vo.tri_vec)
 		{
 			for (size_t j = 0; j < 3; ++j)
 			{
@@ -540,7 +540,7 @@ void draw_objects(void)
 		//model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
 		// Draw triangles
-		draw_triangles(positions, colors, model_matrix);
+		draw_triangles(positions, colors, vo.model_matrix);
 	}
 
 
@@ -612,19 +612,19 @@ void keyboard_func(unsigned char key, int x, int y)
     }
     case 'o':
     {
-        u += 0.1f;
+        vo.u += 0.1f;
 
-        model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
-        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+        vo.model_matrix = glm::mat4(1.0f);
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.u, glm::vec3(0.0f, 1.0f, 0.0f));
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.v, glm::vec3(1.0f, 0.0f, 0.0f));
 
 
 		std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
-        get_background_points();
+        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        get_background_points(vo);
 
-        get_triangles(tri_vec);
+        get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -635,18 +635,18 @@ void keyboard_func(unsigned char key, int x, int y)
     }
     case 'p':
     {
-        u -= 0.1f;
+        vo.u -= 0.1f;
 
-        model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
-        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+        vo.model_matrix = glm::mat4(1.0f);
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.u, glm::vec3(0.0f, 1.0f, 0.0f));
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
-        get_background_points();
+        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        get_background_points(vo);
 
-        get_triangles(tri_vec);
+        get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -656,18 +656,18 @@ void keyboard_func(unsigned char key, int x, int y)
     }
     case 'k':
     {
-        v += 0.1f;
+        vo.v += 0.1f;
 
-        model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
-        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+        vo.model_matrix = glm::mat4(1.0f);
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.u, glm::vec3(0.0f, 1.0f, 0.0f));
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
-        get_background_points();
+        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        get_background_points(vo);
 
-        get_triangles(tri_vec);
+        get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -677,18 +677,18 @@ void keyboard_func(unsigned char key, int x, int y)
     }
     case 'l':
     {
-        v -= 0.1f;
+        vo.v -= 0.1f;
 
-        model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::rotate(model_matrix, u, glm::vec3(0.0f, 1.0f, 0.0f));
-        model_matrix = glm::rotate(model_matrix, v, glm::vec3(1.0f, 0.0f, 0.0f));
+        vo.model_matrix = glm::mat4(1.0f);
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.u, glm::vec3(0.0f, 1.0f, 0.0f));
+        vo.model_matrix = glm::rotate(vo.model_matrix, vo.v, glm::vec3(1.0f, 0.0f, 0.0f));
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        voxel_grid.initialize(voxel_centres, voxel_densities, cell_size);
-        get_background_points();
+        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        get_background_points(vo);
 
-        get_triangles(tri_vec);
+        get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;

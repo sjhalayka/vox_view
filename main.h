@@ -82,33 +82,6 @@ int mouse_y = 0;
 
 vector<unsigned char> test_texture;
 
-const float cell_size = 1.0;
-
-// Triangles data
-vector<custom_math::triangle> tri_vec;
-//custom_math::vertex_3 min_location, max_location;
-
-vector<glm::ivec3> voxel_indices;
-vector<custom_math::vertex_3> voxel_centres;
-vector<float> voxel_densities;
-vector<glm::vec4> voxel_colours;
-size_t voxel_x_res;
-size_t voxel_y_res;
-size_t voxel_z_res;
-
-vector<glm::ivec3> background_indices;
-vector<custom_math::vertex_3> background_centres;
-vector<float> background_densities;
-vector<size_t> background_collisions;
-
-vector<glm::ivec3> background_surface_indices;
-vector<custom_math::vertex_3> background_surface_centres;
-vector<float> background_surface_densities;
-vector<vector<size_t>> background_surface_collisions;
-
-
-
- 
 const size_t x_res = 250;
 const size_t y_res = 250;
 const size_t z_res = 250;
@@ -120,157 +93,210 @@ const float z_grid_max = 10;
 
 
 
-
-// Add this to your header file
-struct VoxelGrid
+class voxel_object
 {
-	// Grid parameters
-	float voxel_size;
-	custom_math::vertex_3 grid_min;
-	custom_math::vertex_3 grid_max;
-	int grid_size_x, grid_size_y, grid_size_z;
+public:
+	// Add this to your header file
+	class VoxelGrid
+	{
+	public:
+		// Grid parameters
+		float voxel_size;
+		custom_math::vertex_3 grid_min;
+		custom_math::vertex_3 grid_max;
+		int grid_size_x, grid_size_y, grid_size_z;
 
-	// 3D array of voxel indices (stores -1 for empty cells)
-	std::vector<int> grid_cells;
+		// 3D array of voxel indices (stores -1 for empty cells)
+		std::vector<int> grid_cells;
 
-	// Initialize the grid based on voxel data
-	void initialize(const std::vector<custom_math::vertex_3>& voxel_centres,
-		const std::vector<float>& voxel_densities,
-		float cell_size = 1.0f) {
-		voxel_size = cell_size;
+		// Initialize the grid based on voxel data
+		void initialize(const std::vector<custom_math::vertex_3>& voxel_centres,
+			const std::vector<float>& voxel_densities,
+			float cell_size = 1.0f) {
+			voxel_size = cell_size;
 
-		// Find min/max extents
-		if (voxel_centres.empty()) return;
+			// Find min/max extents
+			if (voxel_centres.empty()) return;
 
-		grid_min = voxel_centres[0];
-		grid_max = voxel_centres[0];
+			grid_min = voxel_centres[0];
+			grid_max = voxel_centres[0];
 
-		for (const auto& center : voxel_centres) 
-		{
-			grid_min.x = std::min(grid_min.x, center.x - voxel_size / 2.0f);
-			grid_min.y = std::min(grid_min.y, center.y - voxel_size / 2.0f);
-			grid_min.z = std::min(grid_min.z, center.z - voxel_size / 2.0f);
+			for (const auto& center : voxel_centres)
+			{
+				grid_min.x = std::min(grid_min.x, center.x - voxel_size / 2.0f);
+				grid_min.y = std::min(grid_min.y, center.y - voxel_size / 2.0f);
+				grid_min.z = std::min(grid_min.z, center.z - voxel_size / 2.0f);
 
-			grid_max.x = std::max(grid_max.x, center.x + voxel_size / 2.0f);
-			grid_max.y = std::max(grid_max.y, center.y + voxel_size / 2.0f);
-			grid_max.z = std::max(grid_max.z, center.z + voxel_size / 2.0f);
-		}
+				grid_max.x = std::max(grid_max.x, center.x + voxel_size / 2.0f);
+				grid_max.y = std::max(grid_max.y, center.y + voxel_size / 2.0f);
+				grid_max.z = std::max(grid_max.z, center.z + voxel_size / 2.0f);
+			}
 
 
-		// Calculate grid dimensions
-		float size_x = grid_max.x - grid_min.x;
-		float size_y = grid_max.y - grid_min.y;
-		float size_z = grid_max.z - grid_min.z;
+			// Calculate grid dimensions
+			float size_x = grid_max.x - grid_min.x;
+			float size_y = grid_max.y - grid_min.y;
+			float size_z = grid_max.z - grid_min.z;
 
-		grid_size_x = static_cast<int>(std::ceil(size_x / voxel_size));
-		grid_size_y = static_cast<int>(std::ceil(size_y / voxel_size));
-		grid_size_z = static_cast<int>(std::ceil(size_z / voxel_size));
+			grid_size_x = static_cast<int>(std::ceil(size_x / voxel_size));
+			grid_size_y = static_cast<int>(std::ceil(size_y / voxel_size));
+			grid_size_z = static_cast<int>(std::ceil(size_z / voxel_size));
 
-		// Initialize grid with -1 (empty)
-		grid_cells.resize(grid_size_x * grid_size_y * grid_size_z, -1);
+			// Initialize grid with -1 (empty)
+			grid_cells.resize(grid_size_x * grid_size_y * grid_size_z, -1);
 
-		// Place voxels in the grid
-		for (size_t i = 0; i < voxel_centres.size(); i++) {
-			if (voxel_densities[i] <= 0.0f) continue;
+			// Place voxels in the grid
+			for (size_t i = 0; i < voxel_centres.size(); i++) {
+				if (voxel_densities[i] <= 0.0f) continue;
 
-			const auto& center = voxel_centres[i];
+				const auto& center = voxel_centres[i];
 
-			// Get grid cell coordinates
-			int cell_x = static_cast<int>((center.x - grid_min.x) / voxel_size);
-			int cell_y = static_cast<int>((center.y - grid_min.y) / voxel_size);
-			int cell_z = static_cast<int>((center.z - grid_min.z) / voxel_size);
+				// Get grid cell coordinates
+				int cell_x = static_cast<int>((center.x - grid_min.x) / voxel_size);
+				int cell_y = static_cast<int>((center.y - grid_min.y) / voxel_size);
+				int cell_z = static_cast<int>((center.z - grid_min.z) / voxel_size);
 
-			// Ensure within bounds
-			cell_x = std::max(0, std::min(cell_x, grid_size_x - 1));
-			cell_y = std::max(0, std::min(cell_y, grid_size_y - 1));
-			cell_z = std::max(0, std::min(cell_z, grid_size_z - 1));
+				// Ensure within bounds
+				cell_x = std::max(0, std::min(cell_x, grid_size_x - 1));
+				cell_y = std::max(0, std::min(cell_y, grid_size_y - 1));
+				cell_z = std::max(0, std::min(cell_z, grid_size_z - 1));
 
-			// Get index in the flattened 3D array
-			size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
+				// Get index in the flattened 3D array
+				size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
 
-			// Store voxel index in the grid
-			if (cell_index < grid_cells.size()) {
-				grid_cells[cell_index] = static_cast<int>(i);
+				// Store voxel index in the grid
+				if (cell_index < grid_cells.size()) {
+					grid_cells[cell_index] = static_cast<int>(i);
+				}
 			}
 		}
-	}
 
-	// Find which voxel contains a point
-	bool find_voxel_containing_point(const custom_math::vertex_3& point,
-		size_t& voxel_index) const {
-		// Get grid cell coordinates
-		int cell_x = static_cast<int>((point.x - grid_min.x) / voxel_size);
-		int cell_y = static_cast<int>((point.y - grid_min.y) / voxel_size);
-		int cell_z = static_cast<int>((point.z - grid_min.z) / voxel_size);
 
-		// Check bounds
-		if (cell_x < 0 || cell_x >= grid_size_x ||
-			cell_y < 0 || cell_y >= grid_size_y ||
-			cell_z < 0 || cell_z >= grid_size_z) {
-			return false;  // Outside grid
+		// Find which voxel contains a point
+		bool find_voxel_containing_point(const custom_math::vertex_3& point,
+			size_t& voxel_index,
+			voxel_object& v) const {
+			// Get grid cell coordinates
+			int cell_x = static_cast<int>((point.x - grid_min.x) / voxel_size);
+			int cell_y = static_cast<int>((point.y - grid_min.y) / voxel_size);
+			int cell_z = static_cast<int>((point.z - grid_min.z) / voxel_size);
+
+			// Check bounds
+			if (cell_x < 0 || cell_x >= grid_size_x ||
+				cell_y < 0 || cell_y >= grid_size_y ||
+				cell_z < 0 || cell_z >= grid_size_z) {
+				return false;  // Outside grid
+			}
+
+			// Find the index in the flattened 3D array
+			size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
+
+			int voxel_idx = grid_cells[cell_index];
+
+			if (voxel_idx == -1) {
+				return false;  // No voxel here
+			}
+
+			// Do a precise check against the voxel
+			const float half_size = voxel_size * 0.5f;
+			const custom_math::vertex_3& center = v.voxel_centres[voxel_idx];
+
+			if (point.x >= center.x - half_size &&
+				point.x <= center.x + half_size &&
+				point.y >= center.y - half_size &&
+				point.y <= center.y + half_size &&
+				point.z >= center.z - half_size &&
+				point.z <= center.z + half_size)
+			{
+				voxel_index = voxel_idx;
+				return true;
+			}
+
+			return false;
 		}
 
-		// Find the index in the flattened 3D array
-		size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
 
-		int voxel_idx = grid_cells[cell_index];
+		// Combine the grid with the model transformation
+		bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
+			const glm::mat4& model,
+			const VoxelGrid& grid,
+			size_t& voxel_index,
+			voxel_object& v) {
+			// 1. Calculate the inverse model matrix
+			glm::mat4 inv_model_matrix = glm::inverse(model);
 
-		if (voxel_idx == -1) {
-			return false;  // No voxel here
+			// 2. Transform the test point with the inverse model matrix
+			glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
+			glm::vec4 local_space_point = inv_model_matrix * model_space_point;
+
+			// 3. Create a vertex_3 from the transformed point
+			custom_math::vertex_3 transformed_point(
+				local_space_point.x,
+				local_space_point.y,
+				local_space_point.z
+			);
+
+			// 4. Use the grid to find the voxel
+			return grid.find_voxel_containing_point(transformed_point, voxel_index, v);
 		}
 
-		// Do a precise check against the voxel
-		const float half_size = voxel_size * 0.5f;
-		const custom_math::vertex_3& center = voxel_centres[voxel_idx];
 
-		if (point.x >= center.x - half_size &&
-			point.x <= center.x + half_size &&
-			point.y >= center.y - half_size &&
-			point.y <= center.y + half_size &&
-			point.z >= center.z - half_size &&
-			point.z <= center.z + half_size) 
-		{
-			voxel_index = voxel_idx;
-			return true;
-		}
+	};
 
-		return false;
-	}
+
+
+
+
+	VoxelGrid voxel_grid;
+
+
+	const float cell_size = 1.0;
+
+	// Triangles data
+	vector<custom_math::triangle> tri_vec;
+	//custom_math::vertex_3 min_location, max_location;
+
+	vector<glm::ivec3> voxel_indices;
+	vector<custom_math::vertex_3> voxel_centres;
+	vector<float> voxel_densities;
+	vector<glm::vec4> voxel_colours;
+	size_t voxel_x_res;
+	size_t voxel_y_res;
+	size_t voxel_z_res;
+
+	vector<glm::ivec3> background_indices;
+	vector<custom_math::vertex_3> background_centres;
+	vector<float> background_densities;
+	vector<size_t> background_collisions;
+
+	vector<glm::ivec3> background_surface_indices;
+	vector<custom_math::vertex_3> background_surface_centres;
+	vector<float> background_surface_densities;
+	vector<vector<size_t>> background_surface_collisions;
+
+
+
+
+
+
+
+	glm::mat4 model_matrix = glm::mat4(1.0f);
+	float u = 0.0f, v = 0.0f;
 };
 
-// Combine the grid with the model transformation
-bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
-	const glm::mat4& model,
-	const VoxelGrid& grid,
-	size_t& voxel_index) {
-	// 1. Calculate the inverse model matrix
-	glm::mat4 inv_model_matrix = glm::inverse(model);
-
-	// 2. Transform the test point with the inverse model matrix
-	glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
-	glm::vec4 local_space_point = inv_model_matrix * model_space_point;
-
-	// 3. Create a vertex_3 from the transformed point
-	custom_math::vertex_3 transformed_point(
-		local_space_point.x,
-		local_space_point.y,
-		local_space_point.z
-	);
-
-	// 4. Use the grid to find the voxel
-	return grid.find_voxel_containing_point(transformed_point, voxel_index);
-}
 
 
 
 
-VoxelGrid voxel_grid;
 
 
 
-		
-glm::mat4 model_matrix = glm::mat4(1.0f);
-float u = 0.0f, v = 0.0f;
+
+
+voxel_object vo;
+
+
+
 
 //
 //void calc_AABB_min_max_locations(void)
@@ -318,7 +344,7 @@ float u = 0.0f, v = 0.0f;
 
 
 
-void centre_voxels_on_xyz(void)
+void centre_voxels_on_xyz(voxel_object &v)
 {
 	float x_min = numeric_limits<float>::max();
 	float y_min = numeric_limits<float>::max();
@@ -327,35 +353,35 @@ void centre_voxels_on_xyz(void)
 	float y_max = -numeric_limits<float>::max();
 	float z_max = -numeric_limits<float>::max();
 
-	for (size_t t = 0; t < voxel_centres.size(); t++)
+	for (size_t t = 0; t < v.voxel_centres.size(); t++)
 	{
-		if (voxel_densities[t] == 0)
+		if (v.voxel_densities[t] == 0)
 			continue;
 
-		if (voxel_centres[t].x < x_min)
-			x_min = voxel_centres[t].x;
+		if (v.voxel_centres[t].x < x_min)
+			x_min = v.voxel_centres[t].x;
 
-		if (voxel_centres[t].x > x_max)
-			x_max = voxel_centres[t].x;
+		if (v.voxel_centres[t].x > x_max)
+			x_max = v.voxel_centres[t].x;
 
-		if (voxel_centres[t].y < y_min)
-			y_min = voxel_centres[t].y;
+		if (v.voxel_centres[t].y < y_min)
+			y_min = v.voxel_centres[t].y;
 
-		if (voxel_centres[t].y > y_max)
-			y_max = voxel_centres[t].y;
+		if (v.voxel_centres[t].y > y_max)
+			y_max = v.voxel_centres[t].y;
 
-		if (voxel_centres[t].z < z_min)
-			z_min = voxel_centres[t].z;
+		if (v.voxel_centres[t].z < z_min)
+			z_min = v.voxel_centres[t].z;
 
-		if (voxel_centres[t].z > z_max)
-			z_max = voxel_centres[t].z;
+		if (v.voxel_centres[t].z > z_max)
+			z_max = v.voxel_centres[t].z;
 	}
 
-	for (size_t t = 0; t < voxel_centres.size(); t++)
+	for (size_t t = 0; t < v.voxel_centres.size(); t++)
 	{
-		voxel_centres[t].x += -(x_max + x_min) / 2.0f;
-		voxel_centres[t].y += -(y_max + y_min) / 2.0f;
-		voxel_centres[t].z += -(z_max + z_min) / 2.0f;
+		v.voxel_centres[t].x += -(x_max + x_min) / 2.0f;
+		v.voxel_centres[t].y += -(y_max + y_min) / 2.0f;
+		v.voxel_centres[t].z += -(z_max + z_min) / 2.0f;
 	}
 }
 
@@ -429,12 +455,12 @@ bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math:
 
 
 
-bool get_voxels(const char* file_name)
+bool get_voxels(const char* file_name, voxel_object& v)
 {
-	voxel_indices.clear();
-	voxel_centres.clear();
-	voxel_densities.clear();
-	voxel_colours.clear();
+	v.voxel_indices.clear();
+	v.voxel_centres.clear();
+	v.voxel_densities.clear();
+	v.voxel_colours.clear();
 
 	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
@@ -458,45 +484,45 @@ bool get_voxels(const char* file_name)
 		return false;
 	}
 
-	vector<unsigned char> v(file_size, 0);
+	vector<unsigned char> f(file_size, 0);
 
-	infile.read(reinterpret_cast<char*>(&v[0]), file_size);
+	infile.read(reinterpret_cast<char*>(&f[0]), file_size);
 	infile.close();
 
-	const ogt_vox_scene* scene = ogt_vox_read_scene(&v[0], static_cast<uint32_t>(file_size));
+	const ogt_vox_scene* scene = ogt_vox_read_scene(&f[0], static_cast<uint32_t>(file_size));
 
-	voxel_x_res = scene->models[0]->size_x;
-	voxel_y_res = scene->models[0]->size_y;
-	voxel_z_res = scene->models[0]->size_z;
+	v.voxel_x_res = scene->models[0]->size_x;
+	v.voxel_y_res = scene->models[0]->size_y;
+	v.voxel_z_res = scene->models[0]->size_z;
 
-	voxel_indices.resize(voxel_x_res * voxel_y_res * voxel_z_res);
-	voxel_centres.resize(voxel_x_res * voxel_y_res * voxel_z_res);
-	voxel_densities.resize(voxel_x_res * voxel_y_res * voxel_z_res);
-	voxel_colours.resize(voxel_x_res * voxel_y_res * voxel_z_res);
+	v.voxel_indices.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
+	v.voxel_centres.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
+	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
+	v.voxel_colours.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 
-	for (size_t x = 0; x < voxel_x_res; x++)
+	for (size_t x = 0; x < v.voxel_x_res; x++)
 	{
-		for (size_t y = 0; y < voxel_y_res; y++)
+		for (size_t y = 0; y < v.voxel_y_res; y++)
 		{
-			for (size_t z = 0; z < voxel_z_res; z++)
+			for (size_t z = 0; z < v.voxel_z_res; z++)
 			{
-				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
+				const size_t voxel_index = x + (y * v.voxel_x_res) + (z * v.voxel_x_res * v.voxel_y_res);
 				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
-				custom_math::vertex_3 translate(x * cell_size, y * cell_size, z * cell_size);
+				custom_math::vertex_3 translate(x * v.cell_size, y * v.cell_size, z * v.cell_size);
 
-				voxel_centres[voxel_index] = translate;
-				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+				v.voxel_centres[voxel_index] = translate;
+				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
 				// Transparent
 				if (colour_index == 0)
 				{
-					voxel_densities[voxel_index] = 0.0;
+					v.voxel_densities[voxel_index] = 0.0;
 					continue;
 				}
 				else
 				{
-					voxel_densities[voxel_index] = 1.0;
+					v.voxel_densities[voxel_index] = 1.0;
 				}
 
 				const ogt_vox_rgba colour = scene->palette.color[colour_index];
@@ -506,90 +532,90 @@ bool get_voxels(const char* file_name)
 				uint8_t b = colour.b;
 				uint8_t a = colour.a;
 
-				voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+				v.voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 			}
 		}
 	}
 
 	ogt_vox_destroy_scene(scene);
 
-	for (size_t i = 0; i < voxel_centres.size(); i++)
+	for (size_t i = 0; i < v.voxel_centres.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
-		voxel_centres[i].rotate_x(pi - pi / 2.0f);
+		v.voxel_centres[i].rotate_x(pi - pi / 2.0f);
 	}
 
-	centre_voxels_on_xyz();
+	centre_voxels_on_xyz(v);
 
 	return true;
 }
 
 
-bool get_triangles(vector<custom_math::triangle>& tri_vec)
+bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 {
 	tri_vec.clear();
 
-	for (size_t i = 0; i < voxel_centres.size(); i++)
+	for (size_t i = 0; i < v.voxel_centres.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
-		voxel_centres[i].rotate_x(-(pi - pi / 2.0f));
+		v.voxel_centres[i].rotate_x(-(pi - pi / 2.0f));
 	}
 
-	for (size_t x = 0; x < voxel_x_res; x++)
+	for (size_t x = 0; x < v.voxel_x_res; x++)
 	{
-		for (size_t y = 0; y < voxel_y_res; y++)
+		for (size_t y = 0; y < v.voxel_y_res; y++)
 		{
-			for (size_t z = 0; z < voxel_z_res; z++)
+			for (size_t z = 0; z < v.voxel_z_res; z++)
 			{
-				const size_t voxel_index = x + (y * voxel_x_res) + (z * voxel_x_res * voxel_y_res);
-				const custom_math::vertex_3 translate = voxel_centres[voxel_index];
+				const size_t voxel_index = x + (y * v.voxel_x_res) + (z * v.voxel_x_res * v.voxel_y_res);
+				const custom_math::vertex_3 translate = v.voxel_centres[voxel_index];
 
-				voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
-				if (0 == voxel_densities[voxel_index])
+				if (0 == v.voxel_densities[voxel_index])
 					continue;
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
 
 				// Top face (y = 1.0f)
-				q0.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q0.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q0.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q0.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
+				q0.vertex[0] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q0.vertex[1] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q0.vertex[2] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q0.vertex[3] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
 
-				// Bottom face (y = -cell_size*0.5f)
-				q1.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q1.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q1.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q1.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				// Bottom face (y = -v.cell_size*0.5f)
+				q1.vertex[0] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q1.vertex[1] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q1.vertex[2] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q1.vertex[3] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
 
-				// Front face  (z = cell_size*0.5f)
-				q2.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q2.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q2.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q2.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				// Front face  (z = v.cell_size*0.5f)
+				q2.vertex[0] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q2.vertex[1] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q2.vertex[2] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q2.vertex[3] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
 
-				// Back face (z = -cell_size*0.5f)
-				q3.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q3.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q3.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q3.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				// Back face (z = -v.cell_size*0.5f)
+				q3.vertex[0] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q3.vertex[1] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q3.vertex[2] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q3.vertex[3] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
 
-				// Right face (x = cell_size*0.5f)
-				q4.vertex[0] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q4.vertex[1] = custom_math::vertex_3(cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q4.vertex[2] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q4.vertex[3] = custom_math::vertex_3(cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
+				// Right face (x = v.cell_size*0.5f)
+				q4.vertex[0] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q4.vertex[1] = custom_math::vertex_3(v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q4.vertex[2] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q4.vertex[3] = custom_math::vertex_3(v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
 
-				// Left face (x = -cell_size*0.5f)
-				q5.vertex[0] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, cell_size * 0.5f) + translate;
-				q5.vertex[1] = custom_math::vertex_3(-cell_size * 0.5f, cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q5.vertex[2] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, -cell_size * 0.5f) + translate;
-				q5.vertex[3] = custom_math::vertex_3(-cell_size * 0.5f, -cell_size * 0.5f, cell_size * 0.5f) + translate;
+				// Left face (x = -v.cell_size*0.5f)
+				q5.vertex[0] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
+				q5.vertex[1] = custom_math::vertex_3(-v.cell_size * 0.5f, v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q5.vertex[2] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, -v.cell_size * 0.5f) + translate;
+				q5.vertex[3] = custom_math::vertex_3(-v.cell_size * 0.5f, -v.cell_size * 0.5f, v.cell_size * 0.5f) + translate;
 
 				custom_math::triangle t;
 
-				const glm::vec4 c = voxel_colours[voxel_index];
+				const glm::vec4 c = v.voxel_colours[voxel_index];
 				t.colour.x = c.r;
 				t.colour.y = c.g;
 				t.colour.z = c.b;
@@ -598,8 +624,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y + 1) * voxel_x_res + z * voxel_x_res * voxel_y_res;
-				if (y == voxel_y_res - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + (y + 1) * v.voxel_x_res + z * v.voxel_x_res * v.voxel_y_res;
+				if (y == v.voxel_y_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q0.vertex[0];
 					t.vertex[1] = q0.vertex[1];
@@ -615,8 +641,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y - 1) * voxel_x_res + z * voxel_x_res * voxel_y_res;
-				if (y == 0 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + (y - 1) * v.voxel_x_res + z * v.voxel_x_res * v.voxel_y_res;
+				if (y == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q1.vertex[0];
 					t.vertex[1] = q1.vertex[1];
@@ -632,8 +658,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + y * voxel_x_res + (z + 1) * voxel_x_res * voxel_y_res;
-				if (z == voxel_z_res - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + y * v.voxel_x_res + (z + 1) * v.voxel_x_res * v.voxel_y_res;
+				if (z == v.voxel_z_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q2.vertex[0];
 					t.vertex[1] = q2.vertex[1];
@@ -649,8 +675,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = x + (y)*voxel_x_res + (z - 1) * voxel_x_res * voxel_y_res;
-				if (z == 0 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = x + (y)*v.voxel_x_res + (z - 1) * v.voxel_x_res * v.voxel_y_res;
+				if (z == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q3.vertex[0];
 					t.vertex[1] = q3.vertex[1];
@@ -666,8 +692,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = (x + 1) + (y)*voxel_x_res + (z)*voxel_x_res * voxel_y_res;
-				if (x == voxel_x_res - 1 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = (x + 1) + (y)*v.voxel_x_res + (z)*v.voxel_x_res * v.voxel_y_res;
+				if (x == v.voxel_x_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q4.vertex[0];
 					t.vertex[1] = q4.vertex[1];
@@ -682,8 +708,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
-				neighbour_index = (x - 1) + (y)*voxel_x_res + (z)*voxel_x_res * voxel_y_res;
-				if (x == 0 || 0 == voxel_densities[neighbour_index])
+				neighbour_index = (x - 1) + (y)*v.voxel_x_res + (z)*v.voxel_x_res * v.voxel_y_res;
+				if (x == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q5.vertex[0];
 					t.vertex[1] = q5.vertex[1];
@@ -717,10 +743,10 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 		tri_vec[i].vertex[2].rotate_x(pi - pi / 2.0f);
 	}
 
-	for (size_t i = 0; i < voxel_centres.size(); i++)
+	for (size_t i = 0; i < v.voxel_centres.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
-		voxel_centres[i].rotate_x(pi - pi / 2.0f);
+		v.voxel_centres[i].rotate_x(pi - pi / 2.0f);
 	}
 
 
@@ -741,16 +767,16 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec)
 //}
 
 
-void get_background_points(void)
+void get_background_points(voxel_object& v)
 {
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
 
-	background_indices.resize(x_res * y_res * z_res);
-	background_centres.resize(x_res * y_res * z_res);
-	background_densities.resize(x_res * y_res * z_res);
-	background_collisions.resize(x_res * y_res * z_res);
+	v.background_indices.resize(x_res * y_res * z_res);
+	v.background_centres.resize(x_res * y_res * z_res);
+	v.background_densities.resize(x_res * y_res * z_res);
+	v.background_collisions.resize(x_res * y_res * z_res);
 
 	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
 	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
@@ -774,17 +800,17 @@ void get_background_points(void)
 
 				size_t voxel_index = 0;
 
-				background_centres[index] = test_point;
-				background_indices[index] = glm::ivec3(x, y, z);
+				v.background_centres[index] = test_point;
+				v.background_indices[index] = glm::ivec3(x, y, z);
 
-				if (is_point_in_voxel_grid(test_point, model_matrix, voxel_grid, voxel_index)) 
+				if (v.voxel_grid.is_point_in_voxel_grid(test_point, v.model_matrix, v.voxel_grid, voxel_index, v))
 				{
-					background_densities[index] = 1.0;
-					background_collisions[index] = voxel_index;
+					v.background_densities[index] = 1.0;
+					v.background_collisions[index] = voxel_index;
 				}
 				else
 				{
-					background_densities[index] = 0.0;
+					v.background_densities[index] = 0.0;
 				}
 			}
 		}
@@ -803,26 +829,26 @@ void get_background_points(void)
 	//const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
 
 	// Clear any existing data
-	background_surface_indices.clear();
-	background_surface_indices.resize(x_res * y_res * z_res);
-	background_surface_centres.clear();
-	background_surface_centres.resize(x_res * y_res * z_res);
-	background_surface_densities.clear();
-	background_surface_densities.resize(x_res * y_res * z_res);
-	background_surface_collisions.clear();
-	background_surface_collisions.resize(x_res * y_res * z_res);
+	v.background_surface_indices.clear();
+	v.background_surface_indices.resize(x_res * y_res * z_res);
+	v.background_surface_centres.clear();
+	v.background_surface_centres.resize(x_res * y_res * z_res);
+	v.background_surface_densities.clear();
+	v.background_surface_densities.resize(x_res * y_res * z_res);
+	v.background_surface_collisions.clear();
+	v.background_surface_collisions.resize(x_res * y_res * z_res);
 
 	// Check each point in the background grid
-	for (size_t i = 0; i < background_centres.size(); i++)
+	for (size_t i = 0; i < v.background_centres.size(); i++)
 	{
 		// Skip points that are already inside the voxel grid
-		if (background_densities[i] > 0)
+		if (v.background_densities[i] > 0)
 			continue;
 
 		// Get the grid coordinates for this point
-		const int x = background_indices[i].x;
-		const int y = background_indices[i].y;
-		const int z = background_indices[i].z;
+		const int x = v.background_indices[i].x;
+		const int y = v.background_indices[i].y;
+		const int z = v.background_indices[i].z;
 
 		const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
@@ -848,28 +874,28 @@ void get_background_points(void)
 			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
 
 			// If the neighboring point is inside the voxel grid, this is a surface point
-			if (neighbor_index < background_densities.size() && background_densities[neighbor_index] > 0)
+			if (neighbor_index < v.background_densities.size() && v.background_densities[neighbor_index] > 0)
 			{
 				is_surface = true;
 
-				const size_t collision = background_collisions[neighbor_index];
+				const size_t collision = v.background_collisions[neighbor_index];
 
-				background_surface_collisions[index].push_back(collision);
+				v.background_surface_collisions[index].push_back(collision);
 			}
 		}
 
 
-		background_surface_indices[index] = background_indices[i];
-		background_surface_centres[index] = background_centres[i];
+		v.background_surface_indices[index] = v.background_indices[i];
+		v.background_surface_centres[index] = v.background_centres[i];
 
 		if (is_surface)
 		{
 			//cout << background_surface_collisions[index].size() << endl;
-			background_surface_densities[index] = 1.0;
+			v.background_surface_densities[index] = 1.0;
 		}
 		else
 		{
-			background_surface_densities[index] = 0.0;
+			v.background_surface_densities[index] = 0.0;
 		}
 	}
 
@@ -888,7 +914,7 @@ void get_surface_points(void)
 
 
 
-void do_blackening(void)
+void do_blackening(voxel_object &v)
 {
 	for (size_t x = 0; x < x_res; x++)
 	{
@@ -898,15 +924,15 @@ void do_blackening(void)
 			{
 				const size_t index = x + y * x_res + z * x_res * y_res;
 
-				if (background_surface_densities[index] == 0.0)
+				if (v.background_surface_densities[index] == 0.0)
 					continue;
 
-				for (size_t i = 0; i < background_surface_collisions[index].size(); i++)
+				for (size_t i = 0; i < v.background_surface_collisions[index].size(); i++)
 				{
-					voxel_colours[background_surface_collisions[index][i]].r *= test_texture[index] / 255.0f;
-					voxel_colours[background_surface_collisions[index][i]].g *= test_texture[index] / 255.0f;
-					voxel_colours[background_surface_collisions[index][i]].b *= test_texture[index] / 255.0f;
-					voxel_colours[background_surface_collisions[index][i]].a = 1.0f;
+					v.voxel_colours[v.background_surface_collisions[index][i]].r *= test_texture[index] / 255.0f;
+					v.voxel_colours[v.background_surface_collisions[index][i]].g *= test_texture[index] / 255.0f;
+					v.voxel_colours[v.background_surface_collisions[index][i]].b *= test_texture[index] / 255.0f;
+					v.voxel_colours[v.background_surface_collisions[index][i]].a = 1.0f;
 				}
 
 				//cout << background_surface_collisions[index].size() << endl;
