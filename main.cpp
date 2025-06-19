@@ -381,7 +381,7 @@ int main(int argc, char** argv)
 
 
 
-    vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+    vo.initialize(vo.voxel_centres, vo.voxel_densities);
     get_background_points(vo);
 
     do_blackening(vo);
@@ -621,7 +621,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
 		std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        vo.initialize(vo.voxel_centres, vo.voxel_densities);
         get_background_points(vo);
 
         get_triangles(vo.tri_vec, vo);
@@ -643,7 +643,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        vo.initialize(vo.voxel_centres, vo.voxel_densities);
         get_background_points(vo);
 
         get_triangles(vo.tri_vec, vo);
@@ -664,7 +664,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        vo.initialize(vo.voxel_centres, vo.voxel_densities);
         get_background_points(vo);
 
         get_triangles(vo.tri_vec, vo);
@@ -685,7 +685,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-        vo.voxel_grid.initialize(vo.voxel_centres, vo.voxel_densities, vo.cell_size);
+        vo.initialize(vo.voxel_centres, vo.voxel_densities);
         get_background_points(vo);
 
         get_triangles(vo.tri_vec, vo);
