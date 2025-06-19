@@ -170,84 +170,80 @@ public:
 				}
 			}
 		}
-
-
-		// Find which voxel contains a point
-		bool find_voxel_containing_point(const custom_math::vertex_3& point,
-			size_t& voxel_index,
-			voxel_object& v) const {
-			// Get grid cell coordinates
-			int cell_x = static_cast<int>((point.x - grid_min.x) / voxel_size);
-			int cell_y = static_cast<int>((point.y - grid_min.y) / voxel_size);
-			int cell_z = static_cast<int>((point.z - grid_min.z) / voxel_size);
-
-			// Check bounds
-			if (cell_x < 0 || cell_x >= grid_size_x ||
-				cell_y < 0 || cell_y >= grid_size_y ||
-				cell_z < 0 || cell_z >= grid_size_z) {
-				return false;  // Outside grid
-			}
-
-			// Find the index in the flattened 3D array
-			size_t cell_index = cell_x + (cell_y * grid_size_x) + (cell_z * grid_size_x * grid_size_y);
-
-			int voxel_idx = grid_cells[cell_index];
-
-			if (voxel_idx == -1) {
-				return false;  // No voxel here
-			}
-
-			// Do a precise check against the voxel
-			const float half_size = voxel_size * 0.5f;
-			const custom_math::vertex_3& center = v.voxel_centres[voxel_idx];
-
-			if (point.x >= center.x - half_size &&
-				point.x <= center.x + half_size &&
-				point.y >= center.y - half_size &&
-				point.y <= center.y + half_size &&
-				point.z >= center.z - half_size &&
-				point.z <= center.z + half_size)
-			{
-				voxel_index = voxel_idx;
-				return true;
-			}
-
-			return false;
-		}
-
-
-		// Combine the grid with the model transformation
-		bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
-			const glm::mat4& model,
-			const VoxelGrid& grid,
-			size_t& voxel_index,
-			voxel_object& v) {
-			// 1. Calculate the inverse model matrix
-			glm::mat4 inv_model_matrix = glm::inverse(model);
-
-			// 2. Transform the test point with the inverse model matrix
-			glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
-			glm::vec4 local_space_point = inv_model_matrix * model_space_point;
-
-			// 3. Create a vertex_3 from the transformed point
-			custom_math::vertex_3 transformed_point(
-				local_space_point.x,
-				local_space_point.y,
-				local_space_point.z
-			);
-
-			// 4. Use the grid to find the voxel
-			return grid.find_voxel_containing_point(transformed_point, voxel_index, v);
-		}
-
-
 	};
 
-
-
-
-
 	VoxelGrid voxel_grid;
+
+
+	// Find which voxel contains a point
+	bool find_voxel_containing_point(const custom_math::vertex_3& point,
+		size_t& voxel_index) const {
+		// Get grid cell coordinates
+		int cell_x = static_cast<int>((point.x - voxel_grid.grid_min.x) / voxel_grid.voxel_size);
+		int cell_y = static_cast<int>((point.y - voxel_grid.grid_min.y) / voxel_grid.voxel_size);
+		int cell_z = static_cast<int>((point.z - voxel_grid.grid_min.z) / voxel_grid.voxel_size);
+
+		// Check bounds
+		if (cell_x < 0 || cell_x >= voxel_grid.grid_size_x ||
+			cell_y < 0 || cell_y >= voxel_grid.grid_size_y ||
+			cell_z < 0 || cell_z >= voxel_grid.grid_size_z) {
+			return false;  // Outside grid
+		}
+
+		// Find the index in the flattened 3D array
+		size_t cell_index = cell_x + (cell_y * voxel_grid.grid_size_x) + (cell_z * voxel_grid.grid_size_x * voxel_grid.grid_size_y);
+
+		int voxel_idx = voxel_grid.grid_cells[cell_index];
+
+		if (voxel_idx == -1) {
+			return false;  // No voxel here
+		}
+
+		// Do a precise check against the voxel
+		const float half_size = voxel_grid.voxel_size * 0.5f;
+		const custom_math::vertex_3& center = voxel_centres[voxel_idx];
+
+		if (point.x >= center.x - half_size &&
+			point.x <= center.x + half_size &&
+			point.y >= center.y - half_size &&
+			point.y <= center.y + half_size &&
+			point.z >= center.z - half_size &&
+			point.z <= center.z + half_size)
+		{
+			voxel_index = voxel_idx;
+			return true;
+		}
+
+		return false;
+	}
+
+
+	// Combine the grid with the model transformation
+	bool is_point_in_voxel_grid(const custom_math::vertex_3& test_point,
+		const glm::mat4& model,
+		const VoxelGrid& grid,
+		size_t& voxel_index,
+		voxel_object& v) {
+		// 1. Calculate the inverse model matrix
+		glm::mat4 inv_model_matrix = glm::inverse(model);
+
+		// 2. Transform the test point with the inverse model matrix
+		glm::vec4 model_space_point(test_point.x, test_point.y, test_point.z, 1.0f);
+		glm::vec4 local_space_point = inv_model_matrix * model_space_point;
+
+		// 3. Create a vertex_3 from the transformed point
+		custom_math::vertex_3 transformed_point(
+			local_space_point.x,
+			local_space_point.y,
+			local_space_point.z
+		);
+
+		// 4. Use the grid to find the voxel
+		return find_voxel_containing_point(transformed_point, voxel_index);
+	}
+
+
+
 
 
 	const float cell_size = 1.0;
@@ -803,7 +799,7 @@ void get_background_points(voxel_object& v)
 				v.background_centres[index] = test_point;
 				v.background_indices[index] = glm::ivec3(x, y, z);
 
-				if (v.voxel_grid.is_point_in_voxel_grid(test_point, v.model_matrix, v.voxel_grid, voxel_index, v))
+				if (v.is_point_in_voxel_grid(test_point, v.model_matrix, v.voxel_grid, voxel_index, v))
 				{
 					v.background_densities[index] = 1.0;
 					v.background_collisions[index] = voxel_index;
