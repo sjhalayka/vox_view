@@ -363,7 +363,7 @@ int main(int argc, char** argv)
     vo.model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox", vo);
 
-    test_texture.resize(x_res * y_res * z_res, 0);
+    test_texture.resize(x_res * y_res * z_res, 0); // initialize to black
 
     for (size_t x = 0; x < x_res; x++)
     {
