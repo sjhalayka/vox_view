@@ -155,21 +155,14 @@ public:
 			vo_grid_max.z = std::max(vo_grid_max.z, center.z + cell_size / 2.0f);
 		}
 
-
 		// Calculate grid dimensions
 		float size_x = vo_grid_max.x - vo_grid_min.x;
 		float size_y = vo_grid_max.y - vo_grid_min.y;
 		float size_z = vo_grid_max.z - vo_grid_min.z;
 
-		//voxel_x_res = static_cast<int>(std::ceil(size_x / cell_size));
-		//voxel_y_res = static_cast<int>(std::ceil(size_y / cell_size));
-		//voxel_z_res = static_cast<int>(std::ceil(size_z / cell_size));
-
-		// Initialize grid with -1 (empty)
-		//vo_grid_cells.resize(voxel_x_res * voxel_y_res * voxel_z_res, -1);
-
 		// Place voxels in the grid
-		for (size_t i = 0; i < voxel_centres.size(); i++) {
+		for (size_t i = 0; i < voxel_centres.size(); i++)
+		{
 			if (voxel_densities[i] <= 0.0f) continue;
 
 			const auto& center = voxel_centres[i];
@@ -188,9 +181,7 @@ public:
 			size_t cell_index = cell_x + (cell_y * voxel_x_res) + (cell_z * voxel_x_res * voxel_y_res);
 
 			// Store voxel index in the grid
-			if (cell_index < vo_grid_cells.size()) {
-				vo_grid_cells[cell_index] = static_cast<int>(i);
-			}
+			vo_grid_cells[cell_index] = static_cast<int>(i);
 		}
 	}
 
@@ -483,7 +474,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	v.voxel_centres.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_colours.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
-	v.vo_grid_cells.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res, -1);
+	v.vo_grid_cells.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 
 	for (size_t x = 0; x < v.voxel_x_res; x++)
 	{
@@ -503,6 +494,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 				if (colour_index == 0)
 				{
 					v.voxel_densities[voxel_index] = 0.0;
+					v.vo_grid_cells[voxel_index] = -1;
 					continue;
 				}
 				else
