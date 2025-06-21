@@ -135,8 +135,8 @@ public:
 
 
 	// Initialize the grid based on voxel data
-	void initialize(const std::vector<custom_math::vertex_3>& voxel_centres,
-		const std::vector<float>& voxel_densities) {
+	void initialize(const std::vector<custom_math::vertex_3>& voxel_centres/*,
+		const std::vector<float>& voxel_densities*/) {
 
 		// Find min/max extents
 		if (voxel_centres.empty()) return;
@@ -166,7 +166,7 @@ public:
 		//voxel_z_res = static_cast<int>(std::ceil(size_z / cell_size));
 
 		// Initialize grid with -1 (empty)
-		vo_grid_cells.resize(voxel_x_res * voxel_y_res * voxel_z_res, -1);
+		//vo_grid_cells.resize(voxel_x_res * voxel_y_res * voxel_z_res, -1);
 
 		// Place voxels in the grid
 		for (size_t i = 0; i < voxel_centres.size(); i++) {
@@ -444,6 +444,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	v.voxel_centres.clear();
 	v.voxel_densities.clear();
 	v.voxel_colours.clear();
+	v.vo_grid_cells.clear();
 
 	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
@@ -482,6 +483,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	v.voxel_centres.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_colours.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
+	v.vo_grid_cells.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res, -1);
 
 	for (size_t x = 0; x < v.voxel_x_res; x++)
 	{
@@ -506,6 +508,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 				else
 				{
 					v.voxel_densities[voxel_index] = 1.0;
+					v.vo_grid_cells[voxel_index] = 0;
 				}
 
 				const ogt_vox_rgba colour = scene->palette.color[colour_index];
