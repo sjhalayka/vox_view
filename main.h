@@ -99,7 +99,7 @@ public:
 	custom_math::vertex_3 vo_grid_min;
 	custom_math::vertex_3 vo_grid_max;
 	// 3D array of voxel indices (stores -1 for empty cells)
-	//std::vector<long long signed int> vo_grid_cells;
+	std::vector<long long signed int> vo_grid_cells;
 
 
 
@@ -112,7 +112,7 @@ public:
 
 	vector<glm::ivec3> voxel_indices;
 	vector<custom_math::vertex_3> voxel_centres;
-	vector<long long signed int> voxel_densities;
+	vector<float> voxel_densities;
 	vector<glm::vec4> voxel_colours;
 	size_t voxel_x_res;
 	size_t voxel_y_res;
@@ -163,7 +163,7 @@ public:
 		// Place voxels in the grid
 		for (size_t i = 0; i < voxel_centres.size(); i++)
 		{
-			if (voxel_densities[i] == -1) continue;
+			if (voxel_densities[i] <= 0.0f) continue;
 
 			const auto& center = voxel_centres[i];
 
@@ -181,7 +181,7 @@ public:
 			size_t cell_index = cell_x + (cell_y * voxel_x_res) + (cell_z * voxel_x_res * voxel_y_res);
 
 			// Store voxel index in the grid
-			voxel_densities[cell_index] = static_cast<long long signed int>(i);
+			vo_grid_cells[cell_index] = static_cast<int>(i);
 		}
 	}
 
@@ -205,7 +205,7 @@ public:
 		// Find the index in the flattened 3D array
 		size_t cell_index = cell_x + (cell_y * voxel_x_res) + (cell_z * voxel_x_res * voxel_y_res);
 
-		long long signed int voxel_idx = voxel_densities[cell_index];
+		long long signed int voxel_idx = vo_grid_cells[cell_index];
 
 		if (voxel_idx == -1) {
 			return false;  // No voxel here
@@ -329,7 +329,7 @@ void centre_voxels_on_xyz(voxel_object &v)
 
 	for (size_t t = 0; t < v.voxel_centres.size(); t++)
 	{
-		if (v.voxel_densities[t] == -1)
+		if (v.voxel_densities[t] == 0)
 			continue;
 
 		if (v.voxel_centres[t].x < x_min)
@@ -435,7 +435,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	v.voxel_centres.clear();
 	v.voxel_densities.clear();
 	v.voxel_colours.clear();
-	//v.vo_grid_cells.clear();
+	v.vo_grid_cells.clear();
 
 	ifstream infile(file_name, ifstream::ate | ifstream::binary);
 
@@ -472,11 +472,9 @@ bool get_voxels(const char* file_name, voxel_object& v)
 
 	v.voxel_indices.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_centres.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
-	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res, -1);
+	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_colours.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
-	//v.vo_grid_cells.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
-
-	//size_t count = 0;
+	v.vo_grid_cells.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 
 	for (size_t x = 0; x < v.voxel_x_res; x++)
 	{
@@ -487,24 +485,32 @@ bool get_voxels(const char* file_name, voxel_object& v)
 				const size_t voxel_index = x + (y * v.voxel_x_res) + (z * v.voxel_x_res * v.voxel_y_res);
 				const uint8_t colour_index = scene->models[0]->voxel_data[voxel_index];
 
-				if (colour_index != 0)
+				custom_math::vertex_3 translate(x * v.cell_size, y * v.cell_size, z * v.cell_size);
+
+				v.voxel_centres[voxel_index] = translate;
+				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+
+				// Transparent
+				if (colour_index == 0)
 				{
-					custom_math::vertex_3 translate(x * v.cell_size, y * v.cell_size, z * v.cell_size);
-
-					v.voxel_centres[voxel_index] = translate;
-					v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
-					v.voxel_densities[voxel_index] = 0;
-					//v.vo_grid_cells[voxel_index] = 0;
-
-					const ogt_vox_rgba colour = scene->palette.color[colour_index];
-
-					uint8_t r = colour.r;
-					uint8_t g = colour.g;
-					uint8_t b = colour.b;
-					uint8_t a = colour.a;
-
-					v.voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+					v.voxel_densities[voxel_index] = 0.0;
+					v.vo_grid_cells[voxel_index] = -1;
+					continue;
 				}
+				else
+				{
+					v.voxel_densities[voxel_index] = 1.0;
+					v.vo_grid_cells[voxel_index] = 0;
+				}
+
+				const ogt_vox_rgba colour = scene->palette.color[colour_index];
+
+				uint8_t r = colour.r;
+				uint8_t g = colour.g;
+				uint8_t b = colour.b;
+				uint8_t a = colour.a;
+
+				v.voxel_colours[voxel_index] = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 			}
 		}
 	}
@@ -521,6 +527,8 @@ bool get_voxels(const char* file_name, voxel_object& v)
 
 	return true;
 }
+
+
 
 
 bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
@@ -544,7 +552,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 
 				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
-				if (-1 == v.voxel_densities[voxel_index])
+				if (0 == v.voxel_densities[voxel_index])
 					continue;
 
 				custom_math::quad q0, q1, q2, q3, q4, q5;
@@ -597,7 +605,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y + 1) * v.voxel_x_res + z * v.voxel_x_res * v.voxel_y_res;
-				if (y == v.voxel_y_res - 1 || -1 == v.voxel_densities[neighbour_index])
+				if (y == v.voxel_y_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q0.vertex[0];
 					t.vertex[1] = q0.vertex[1];
@@ -614,7 +622,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y - 1) * v.voxel_x_res + z * v.voxel_x_res * v.voxel_y_res;
-				if (y == 0 || -1 == v.voxel_densities[neighbour_index])
+				if (y == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q1.vertex[0];
 					t.vertex[1] = q1.vertex[1];
@@ -631,7 +639,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + y * v.voxel_x_res + (z + 1) * v.voxel_x_res * v.voxel_y_res;
-				if (z == v.voxel_z_res - 1 || -1 == v.voxel_densities[neighbour_index])
+				if (z == v.voxel_z_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q2.vertex[0];
 					t.vertex[1] = q2.vertex[1];
@@ -648,7 +656,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = x + (y)*v.voxel_x_res + (z - 1) * v.voxel_x_res * v.voxel_y_res;
-				if (z == 0 || -1 == v.voxel_densities[neighbour_index])
+				if (z == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q3.vertex[0];
 					t.vertex[1] = q3.vertex[1];
@@ -665,7 +673,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = (x + 1) + (y)*v.voxel_x_res + (z)*v.voxel_x_res * v.voxel_y_res;
-				if (x == v.voxel_x_res - 1 || -1 == v.voxel_densities[neighbour_index])
+				if (x == v.voxel_x_res - 1 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q4.vertex[0];
 					t.vertex[1] = q4.vertex[1];
@@ -681,7 +689,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				// Note that this index is possibly out of range, 
 				// which is why it's used second in the if()
 				neighbour_index = (x - 1) + (y)*v.voxel_x_res + (z)*v.voxel_x_res * v.voxel_y_res;
-				if (x == 0 || -1 == v.voxel_densities[neighbour_index])
+				if (x == 0 || 0 == v.voxel_densities[neighbour_index])
 				{
 					t.vertex[0] = q5.vertex[0];
 					t.vertex[1] = q5.vertex[1];
