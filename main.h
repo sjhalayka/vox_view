@@ -134,62 +134,23 @@ public:
 
 
 
-	// Initialize the grid based on voxel data
-	void initialize(const std::vector<custom_math::vertex_3>& voxel_centres/*,
-		const std::vector<float>& voxel_densities*/) {
+	//// Initialize the grid based on voxel data
+	//void initialize(const std::vector<custom_math::vertex_3>& voxel_centres/*,
+	//	const std::vector<float>& voxel_densities*/) {
 
-		// Find min/max extents
-		if (voxel_centres.empty()) return;
+	//	// Find min/max extents
+	//	if (voxel_centres.empty()) return;
 
-		vo_grid_min = voxel_centres[0];
-		vo_grid_max = voxel_centres[0];
 
-		for (const auto& center : voxel_centres)
-		{
-			vo_grid_min.x = std::min(vo_grid_min.x, center.x - cell_size / 2.0f);
-			vo_grid_min.y = std::min(vo_grid_min.y, center.y - cell_size / 2.0f);
-			vo_grid_min.z = std::min(vo_grid_min.z, center.z - cell_size / 2.0f);
-
-			vo_grid_max.x = std::max(vo_grid_max.x, center.x + cell_size / 2.0f);
-			vo_grid_max.y = std::max(vo_grid_max.y, center.y + cell_size / 2.0f);
-			vo_grid_max.z = std::max(vo_grid_max.z, center.z + cell_size / 2.0f);
-		}
-
-		// Calculate grid dimensions
-		float size_x = vo_grid_max.x - vo_grid_min.x;
-		float size_y = vo_grid_max.y - vo_grid_min.y;
-		float size_z = vo_grid_max.z - vo_grid_min.z;
-
-		// Place voxels in the grid
-		for (size_t i = 0; i < voxel_centres.size(); i++)
-		{
-			if (voxel_densities[i] <= 0.0f) continue;
-
-			const auto& center = voxel_centres[i];
-
-			// Get grid cell coordinates
-			size_t cell_x = static_cast<int>((center.x - vo_grid_min.x) / cell_size);
-			size_t cell_y = static_cast<int>((center.y - vo_grid_min.y) / cell_size);
-			size_t cell_z = static_cast<int>((center.z - vo_grid_min.z) / cell_size);
-
-			// Ensure within bounds
-			cell_x = std::max((size_t)0, std::min(cell_x, voxel_x_res - 1));
-			cell_y = std::max((size_t)0, std::min(cell_y, voxel_y_res - 1));
-			cell_z = std::max((size_t)0, std::min(cell_z, voxel_z_res - 1));
-
-			// Get index in the flattened 3D array
-			size_t cell_index = cell_x + (cell_y * voxel_x_res) + (cell_z * voxel_x_res * voxel_y_res);
-
-			// Store voxel index in the grid
-			vo_grid_cells[cell_index] = static_cast<int>(i);
-		}
-	}
+	//}
 
 
 
 	// Find which voxel contains a point
-	bool find_voxel_containing_point(const custom_math::vertex_3& point,
-		size_t& voxel_index) const {
+	bool find_voxel_containing_point(
+		const custom_math::vertex_3& point,
+		size_t& voxel_index) const 
+	{
 		// Get grid cell coordinates
 		int cell_x = static_cast<int>((point.x - vo_grid_min.x) / cell_size);
 		int cell_y = static_cast<int>((point.y - vo_grid_min.y) / cell_size);
@@ -207,9 +168,8 @@ public:
 
 		long long signed int voxel_idx = vo_grid_cells[cell_index];
 
-		if (voxel_idx == -1) {
+		if (voxel_idx == -1)
 			return false;  // No voxel here
-		}
 
 		// Do a precise check against the voxel
 		const float half_size = cell_size * 0.5f;
@@ -524,6 +484,52 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	}
 
 	centre_voxels_on_xyz(v);
+
+
+	v.vo_grid_min = v.voxel_centres[0];
+	v.vo_grid_max = v.voxel_centres[0];
+
+	for (const auto& center : v.voxel_centres)
+	{
+		v.vo_grid_min.x = std::min(v.vo_grid_min.x, center.x - v.cell_size / 2.0f);
+		v.vo_grid_min.y = std::min(v.vo_grid_min.y, center.y - v.cell_size / 2.0f);
+		v.vo_grid_min.z = std::min(v.vo_grid_min.z, center.z - v.cell_size / 2.0f);
+
+		v.vo_grid_max.x = std::max(v.vo_grid_max.x, center.x + v.cell_size / 2.0f);
+		v.vo_grid_max.y = std::max(v.vo_grid_max.y, center.y + v.cell_size / 2.0f);
+		v.vo_grid_max.z = std::max(v.vo_grid_max.z, center.z + v.cell_size / 2.0f);
+	}
+
+	// Calculate grid dimensions
+	float size_x = v.vo_grid_max.x - v.vo_grid_min.x;
+	float size_y = v.vo_grid_max.y - v.vo_grid_min.y;
+	float size_z = v.vo_grid_max.z - v.vo_grid_min.z;
+
+	// Place voxels in the grid
+	for (size_t i = 0; i < v.voxel_centres.size(); i++)
+	{
+		if (v.voxel_densities[i] <= 0.0f) continue;
+
+		const auto& center = v.voxel_centres[i];
+
+		// Get grid cell coordinates
+		size_t cell_x = static_cast<int>((center.x - v.vo_grid_min.x) / v.cell_size);
+		size_t cell_y = static_cast<int>((center.y - v.vo_grid_min.y) / v.cell_size);
+		size_t cell_z = static_cast<int>((center.z - v.vo_grid_min.z) / v.cell_size);
+
+		// Ensure within bounds
+		cell_x = std::max((size_t)0, std::min(cell_x, v.voxel_x_res - 1));
+		cell_y = std::max((size_t)0, std::min(cell_y, v.voxel_y_res - 1));
+		cell_z = std::max((size_t)0, std::min(cell_z, v.voxel_z_res - 1));
+
+		// Get index in the flattened 3D array
+		size_t cell_index = cell_x + (cell_y * v.voxel_x_res) + (cell_z * v.voxel_x_res * v.voxel_y_res);
+
+		// Store voxel index in the grid
+		v.vo_grid_cells[cell_index] = static_cast<int>(i);
+	}
+
+
 
 	return true;
 }
