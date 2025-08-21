@@ -376,13 +376,9 @@ int main(int argc, char** argv)
 
     vo.model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox", vo);
-
-    get_background_points(vo);
-
-    do_blackening(vo);
+//    do_blackening(vo);
     get_triangles(vo.tri_vec, vo);
-
-
+    get_background_points(vo);
 
 
 
@@ -475,8 +471,6 @@ void draw_objects(void)
     //    }
     //}
 
-
-
     //draw_points(positions, colors, model_matrix);
 
 
@@ -512,6 +506,10 @@ void draw_objects(void)
     }
 
     draw_points(positions, colors, glm::mat4(1.0f));
+
+
+
+
 
 
 

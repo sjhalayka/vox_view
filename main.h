@@ -82,9 +82,9 @@ int mouse_y = 0;
 
 vector<unsigned char> test_texture;
 
-const size_t x_res = 250;
-const size_t y_res = 250;
-const size_t z_res = 250;
+const size_t x_res = 25;
+const size_t y_res = 25;
+const size_t z_res = 25;
 
 const float x_grid_max = 10;
 const float y_grid_max = 10;
@@ -96,13 +96,12 @@ const float z_grid_max = 10;
 class voxel_object
 {
 public:
+
+
+
 	custom_math::vertex_3 vo_grid_min;
 	custom_math::vertex_3 vo_grid_max;
 	// 3D array of voxel indices (stores -1 for empty cells)
-	std::vector<long long signed int> vo_grid_cells;
-
-
-
 
 	const float cell_size = 1.0;
 
@@ -112,7 +111,14 @@ public:
 
 	vector<glm::ivec3> voxel_indices;
 	vector<custom_math::vertex_3> voxel_centres;
+
+	// Note: when destroying a voxel, set voxel_densities[index] to 0 and vo_grid_cells[index] to -1
+	// then re-generate the triangles
 	vector<float> voxel_densities;
+	std::vector<long long signed int> vo_grid_cells;
+
+
+
 	vector<glm::vec4> voxel_colours;
 	size_t voxel_x_res;
 	size_t voxel_y_res;
@@ -528,8 +534,6 @@ bool get_voxels(const char* file_name, voxel_object& v)
 		// Store voxel index in the grid
 		v.vo_grid_cells[cell_index] = static_cast<int>(i);
 	}
-
-
 
 	return true;
 }
