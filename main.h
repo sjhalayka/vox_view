@@ -113,7 +113,7 @@ public:
 	vector<custom_math::triangle> tri_vec;
 	//custom_math::vertex_3 min_location, max_location;
 
-	//vector<glm::ivec3> voxel_indices;
+	vector<glm::ivec3> voxel_indices;
 	vector<custom_math::vertex_3> voxel_centres;
 
 	// Note: when destroying a voxel, set voxel_densities[index] to 0 and vo_grid_cells[index] to -1
@@ -133,7 +133,7 @@ public:
 	vector<float> background_densities;
 	vector<int> background_collisions;
 
-	//vector<glm::ivec3> background_surface_indices;
+	vector<glm::ivec3> background_surface_indices;
 	vector<custom_math::vertex_3> background_surface_centres;
 	vector<float> background_surface_densities;
 	vector<vector<int>> background_surface_collisions;
@@ -227,6 +227,8 @@ public:
 
 
 };
+
+
 
 
 
@@ -397,7 +399,7 @@ bool write_triangles_to_binary_stereo_lithography_file(const vector<custom_math:
 
 bool get_voxels(const char* file_name, voxel_object& v)
 {
-	//v.voxel_indices.clear();
+	v.voxel_indices.clear();
 	v.voxel_centres.clear();
 	v.voxel_densities.clear();
 	v.voxel_colours.clear();
@@ -436,7 +438,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 	v.voxel_y_res = scene->models[0]->size_y;
 	v.voxel_z_res = scene->models[0]->size_z;
 
-	//v.voxel_indices.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
+	v.voxel_indices.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_centres.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_densities.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
 	v.voxel_colours.resize(v.voxel_x_res * v.voxel_y_res * v.voxel_z_res);
@@ -454,7 +456,7 @@ bool get_voxels(const char* file_name, voxel_object& v)
 				custom_math::vertex_3 translate(x * v.cell_size, y * v.cell_size, z * v.cell_size);
 
 				v.voxel_centres[voxel_index] = translate;
-				//v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
 				// Transparent
 				if (colour_index == 0)
@@ -560,7 +562,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 				const size_t voxel_index = x + (y * v.voxel_x_res) + (z * v.voxel_x_res * v.voxel_y_res);
 				const custom_math::vertex_3 translate = v.voxel_centres[voxel_index];
 
-				//v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
+				v.voxel_indices[voxel_index] = glm::ivec3(x, y, z);
 
 				if (0 == v.voxel_densities[voxel_index])
 					continue;
@@ -755,7 +757,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 //	x = remainder % x_res;
 //}
 
-void get_background_points(voxel_object& v)
+void get_background_points_cpu(voxel_object& v)
 {
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
@@ -770,7 +772,7 @@ void get_background_points(voxel_object& v)
 	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
 	const float z_step_size = (z_grid_max - z_grid_min) / (z_res - 1);
 
-	custom_math::vertex_3 Z(x_grid_min, y_grid_min, z_grid_min);
+	custom_math::vertex_3 Z(x_grid_min, y_grid_min, x_grid_min);
 
 	for (size_t z = 0; z < z_res; z++, Z.z += z_step_size)
 	{
@@ -804,7 +806,6 @@ void get_background_points(voxel_object& v)
 		}
 	}
 
-
 	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
 	static const int directions[6][3] = {
 		{1, 0, 0}, {-1, 0, 0},  // x directions
@@ -812,9 +813,14 @@ void get_background_points(voxel_object& v)
 		{0, 0, 1}, {0, 0, -1}   // z directions
 	};
 
+	// Initialize with the same grid size as background points
+	//const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
+	//const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
+	//const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
+
 	// Clear any existing data
-	//v.background_surface_indices.clear();
-	//v.background_surface_indices.resize(x_res * y_res * z_res);
+	v.background_surface_indices.clear();
+	v.background_surface_indices.resize(x_res * y_res * z_res);
 	v.background_surface_centres.clear();
 	v.background_surface_centres.resize(x_res * y_res * z_res);
 	v.background_surface_densities.clear();
@@ -869,7 +875,7 @@ void get_background_points(voxel_object& v)
 		}
 
 
-		//v.background_surface_indices[index] = v.background_indices[i];
+		v.background_surface_indices[index] = v.background_indices[i];
 		v.background_surface_centres[index] = v.background_centres[i];
 
 		if (is_surface)
@@ -889,393 +895,184 @@ void get_background_points(voxel_object& v)
 
 
 
-void get_background_points_gpu(voxel_object& v)
+
+
+void get_background_points(voxel_object& v)
 {
-	//get_background_points(v);
-	//return;
-
-
-	const size_t total = x_res * y_res * z_res;
-
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
 	float z_grid_min = -z_grid_max;
 
-	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1.0f);
-	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1.0f);
-	const float z_step_size = (z_grid_max - z_grid_min) / (z_res - 1.0f);
+	v.background_indices.resize(x_res * y_res * z_res);
+	v.background_centres.resize(x_res * y_res * z_res);
+	v.background_densities.resize(x_res * y_res * z_res);
+	v.background_collisions.resize(x_res * y_res * z_res, -1);
 
-	v.background_indices.resize(total);
-	v.background_centres.resize(total);
-	v.background_densities.resize(total);
-	v.background_collisions.resize(total);
+	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
+	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
+	const float z_step_size = (z_grid_max - z_grid_min) / (z_res - 1);
 
-	//v.background_surface_indices.resize(total);
-	v.background_surface_centres.resize(total);
-	v.background_surface_densities.resize(total);
-	v.background_surface_collisions.resize(total);
+	custom_math::vertex_3 Z(x_grid_min, y_grid_min, z_grid_min);
 
-	// Set background and surface indices/centres on CPU
-	for (size_t z = 0; z < z_res; ++z)
+	for (size_t z = 0; z < z_res; z++, Z.z += z_step_size)
 	{
-		const float test_z = z_grid_min + static_cast<float>(z) * z_step_size;
-		for (size_t x = 0; x < x_res; ++x)
+		Z.x = x_grid_min;
+
+		for (size_t x = 0; x < x_res; x++, Z.x += x_step_size)
 		{
-			const float test_x = x_grid_min + static_cast<float>(x) * x_step_size;
-			for (size_t y = 0; y < y_res; ++y)
+			Z.y = y_grid_min;
+
+			for (size_t y = 0; y < y_res; y++, Z.y += y_step_size)
 			{
-				const float test_y = y_grid_min + static_cast<float>(y) * y_step_size;
-				const size_t index = x + y * x_res + z * x_res * y_res;
+				const custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
 
-				v.background_indices[index] = glm::ivec3(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z));
-				v.background_centres[index] = custom_math::vertex_3(test_x, test_y, test_z);
+				const size_t index = x + (y * x_res) + (z * x_res * y_res);
 
-				//v.background_surface_indices[index] = v.background_indices[index];
-				v.background_surface_centres[index] = v.background_centres[index];
+				v.background_centres[index] = test_point;
+				v.background_indices[index] = glm::ivec3(x, y, z);
 			}
 		}
 	}
 
-	// Helper to create compute program
-	auto create_compute_program = [](const char* src) -> GLuint {
-		GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
-		glShaderSource(shader, 1, &src, nullptr);
-		glCompileShader(shader);
-
-		GLint status;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-		if (!status) {
-			char log[1024];
-			glGetShaderInfoLog(shader, 1024, nullptr, log);
-			std::cout << "Compute shader compile error: " << log << std::endl;
-			glDeleteShader(shader);
-			return 0;
-		}
-
-		GLuint program = glCreateProgram();
-		glAttachShader(program, shader);
-		glLinkProgram(program);
-
-		glGetProgramiv(program, GL_LINK_STATUS, &status);
-		if (!status) {
-			char log[1024];
-			glGetProgramInfoLog(program, 1024, nullptr, log);
-			std::cout << "Compute program link error: " << log << std::endl;
-			glDeleteProgram(program);
-			glDeleteShader(shader);
-			return 0;
-		}
-
-		glDeleteShader(shader);
-		return program;
-		};
-
-	// Inside compute shader source
-	const char* inside_src = R"glsl(
-		#version 430 core
-
-		layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
-
-		uniform uint x_res;
-		uniform uint y_res;
-		uniform uint z_res;
-		uniform float x_grid_min;
-		uniform float y_grid_min;
-		uniform float z_grid_min;
-		uniform float x_step_size;
-		uniform float y_step_size;
-		uniform float z_step_size;
-		uniform mat4 inv_model_matrix;
-		uniform vec3 vo_grid_min;
-		uniform float cell_size;
-		uniform uint voxel_x_res;
-		uniform uint voxel_y_res;
-		uniform uint voxel_z_res;
-
-		layout(std140, binding = 0) buffer GridCells { int grid_cells[]; };
-		layout(std140, binding = 1) buffer VoxelCentres { vec3 voxel_centres[]; };
-		layout(std140, binding = 2) buffer BgDensity { float bg_density[]; };
-		layout(std140, binding = 3) buffer BgCollision { int bg_collision[]; };
-
-		void main() {
-			uvec3 gid = gl_GlobalInvocationID;
-			if (gid.x >= x_res || gid.y >= y_res || gid.z >= z_res) return;
-
-			uint flat = gid.x + gid.y * x_res + gid.z * x_res * y_res;
-
-			float test_x = x_grid_min + float(gid.x) * x_step_size;
-			float test_y = y_grid_min + float(gid.y) * y_step_size;
-			float test_z = z_grid_min + float(gid.z) * z_step_size;
-			vec3 test_point = vec3(test_x, test_y, test_z);
-
-			vec4 local_space_point = inv_model_matrix * vec4(test_point, 1.0);
-			vec3 transformed_point = local_space_point.xyz;
-
-			int cell_x = int((transformed_point.x - vo_grid_min.x) / cell_size);
-			int cell_y = int((transformed_point.y - vo_grid_min.y) / cell_size);
-			int cell_z = int((transformed_point.z - vo_grid_min.z) / cell_size);
-
-			bool inside = false;
-			int voxel_idx = -1;
-
-			if (cell_x >= 0 && cell_x < int(voxel_x_res) &&
-				cell_y >= 0 && cell_y < int(voxel_y_res) &&
-				cell_z >= 0 && cell_z < int(voxel_z_res)) {
-				uint cell_index = uint(cell_x) + uint(cell_y) * voxel_x_res + uint(cell_z) * voxel_x_res * voxel_y_res;
-				voxel_idx = grid_cells[cell_index];
-				if (voxel_idx != -1) {
-					vec3 center = voxel_centres[uint(voxel_idx)];
-					float half_size = cell_size * 0.5;
-					if (transformed_point.x >= center.x - half_size && transformed_point.x <= center.x + half_size &&
-						transformed_point.y >= center.y - half_size && transformed_point.y <= center.y + half_size &&
-						transformed_point.z >= center.z - half_size && transformed_point.z <= center.z + half_size) {
-						inside = true;
-					}
-				}
-			}
-
-			if (inside) {
-				bg_density[flat] = 1.0;
-				bg_collision[flat] = voxel_idx;
-			} else {
-				bg_density[flat] = 0.0;
-				bg_collision[flat] = -1;
-			}
-		}
-	)glsl";
-
-	GLuint compute_program_inside_local = create_compute_program(inside_src);
-	if (!compute_program_inside_local) {
-		std::cout << "Failed to create inside compute program" << std::endl;
-		return;
-	}
-
-	// Surface compute shader source
-	const char* surface_src = R"glsl(
-		#version 430 core
-
-		layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
-
-		uniform uint x_res;
-		uniform uint y_res;
-		uniform uint z_res;
-
-		layout(std140, binding = 2) buffer BgDensity { float bg_density[]; };
-		layout(std140, binding = 3) buffer BgCollision { int bg_collision[]; };
-		layout(std140, binding = 4) buffer BgSurfaceDensity { float bg_surface_density[]; };
-		layout(std140, binding = 5) buffer SurfaceCounts { int surface_counts[]; };
-		layout(std140, binding = 6) buffer SurfaceCollisions { int surface_collisions[]; };
-
-		const int MAX_NEIGHBORS = 6;
-
-		void main() {
-			uvec3 gid = gl_GlobalInvocationID;
-			if (gid.x >= x_res || gid.y >= y_res || gid.z >= z_res) return;
-
-			uint flat = gid.x + gid.y * x_res + gid.z * x_res * y_res;
-
-			float d = bg_density[flat];
-			surface_counts[flat] = 0;
-			bg_surface_density[flat] = 0.0;
-
-			if (d > 0.0) return;
-
-			int count = 0;
-			int directions[6][3] = int[][](
-				int[](1, 0, 0), int[](-1, 0, 0),
-				int[](0, 1, 0), int[](0, -1, 0),
-				int[](0, 0, 1), int[](0, 0, -1)
-			);
-
-			ivec3 pos = ivec3(gid);
-			for (int dir = 0; dir < 6; ++dir) {
-				ivec3 npos = pos + ivec3(directions[dir][0], directions[dir][1], directions[dir][2]);
-				if (npos.x < 0 || npos.x >= int(x_res) || npos.y < 0 || npos.y >= int(y_res) || npos.z < 0 || npos.z >= int(z_res)) continue;
-
-				uint nflat = uint(npos.x) + uint(npos.y) * x_res + uint(npos.z) * x_res * y_res;
-				float nd = bg_density[nflat];
-				if (nd > 0.0) {
-					int col = bg_collision[nflat];
-					uint offset = flat * uint(MAX_NEIGHBORS);
-					surface_collisions[offset + uint(count)] = col;
-					count++;
-				}
-			}
-
-			surface_counts[flat] = count;
-			if (count > 0) bg_surface_density[flat] = 1.0;
-		}
-	)glsl";
-
-	GLuint compute_program_surface_local = create_compute_program(surface_src);
-	if (!compute_program_surface_local) {
-		std::cout << "Failed to create surface compute program" << std::endl;
-		glDeleteProgram(compute_program_inside_local);
-		return;
-	}
-
-	// Create SSBOs
-	GLuint ssbo_grid_cells_local = 0;
-	glGenBuffers(1, &ssbo_grid_cells_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_grid_cells_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * v.vo_grid_cells.size(), v.vo_grid_cells.data(), GL_STATIC_READ);
-
-	GLuint ssbo_voxel_centres_local = 0;
-	glGenBuffers(1, &ssbo_voxel_centres_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_voxel_centres_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(custom_math::vertex_3) * v.voxel_centres.size(), v.voxel_centres.data(), GL_STATIC_READ);
-
-	GLuint ssbo_bg_density_local = 0;
-	glGenBuffers(1, &ssbo_bg_density_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_density_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * total, nullptr, GL_DYNAMIC_COPY);
-
-	GLuint ssbo_bg_collision_local = 0;
-	glGenBuffers(1, &ssbo_bg_collision_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_collision_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * total, nullptr, GL_DYNAMIC_COPY);
-
-	GLuint ssbo_bg_surface_density_local = 0;
-	glGenBuffers(1, &ssbo_bg_surface_density_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_surface_density_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * total, nullptr, GL_DYNAMIC_COPY);
-
-	GLuint ssbo_surface_counts_local = 0;
-	glGenBuffers(1, &ssbo_surface_counts_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_surface_counts_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * total, nullptr, GL_DYNAMIC_COPY);
-
-	GLuint ssbo_surface_collisions_local = 0;
-	glGenBuffers(1, &ssbo_surface_collisions_local);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_surface_collisions_local);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * total * 6, nullptr, GL_DYNAMIC_COPY);
-
-	// Bind SSBOs for inside compute
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_grid_cells_local);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_voxel_centres_local);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_bg_density_local);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_bg_collision_local);
-
-	// Use inside program and set uniforms
-	glUseProgram(compute_program_inside_local);
-
-	GLint loc = glGetUniformLocation(compute_program_inside_local, "x_res");
-	glUniform1ui(loc, static_cast<GLuint>(x_res));
-	loc = glGetUniformLocation(compute_program_inside_local, "y_res");
-	glUniform1ui(loc, static_cast<GLuint>(y_res));
-	loc = glGetUniformLocation(compute_program_inside_local, "z_res");
-	glUniform1ui(loc, static_cast<GLuint>(z_res));
-
-	loc = glGetUniformLocation(compute_program_inside_local, "x_grid_min");
-	glUniform1f(loc, x_grid_min);
-	loc = glGetUniformLocation(compute_program_inside_local, "y_grid_min");
-	glUniform1f(loc, y_grid_min);
-	loc = glGetUniformLocation(compute_program_inside_local, "z_grid_min");
-	glUniform1f(loc, z_grid_min);
-
-	loc = glGetUniformLocation(compute_program_inside_local, "x_step_size");
-	glUniform1f(loc, x_step_size);
-	loc = glGetUniformLocation(compute_program_inside_local, "y_step_size");
-	glUniform1f(loc, y_step_size);
-	loc = glGetUniformLocation(compute_program_inside_local, "z_step_size");
-	glUniform1f(loc, z_step_size);
-
+	// GPU part for densities and collisions
 	glm::mat4 inv_model = glm::inverse(v.model_matrix);
-	loc = glGetUniformLocation(compute_program_inside_local, "inv_model_matrix");
+
+	glUseProgram(compute_program_inside);
+
+	GLint loc = glGetUniformLocation(compute_program_inside, "inv_model");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(inv_model));
 
-	loc = glGetUniformLocation(compute_program_inside_local, "vo_grid_min");
+	loc = glGetUniformLocation(compute_program_inside, "vo_grid_min");
 	glUniform3f(loc, v.vo_grid_min.x, v.vo_grid_min.y, v.vo_grid_min.z);
 
-	loc = glGetUniformLocation(compute_program_inside_local, "cell_size");
+	loc = glGetUniformLocation(compute_program_inside, "cell_size");
 	glUniform1f(loc, v.cell_size);
 
-	loc = glGetUniformLocation(compute_program_inside_local, "voxel_x_res");
-	glUniform1ui(loc, static_cast<GLuint>(v.voxel_x_res));
-	loc = glGetUniformLocation(compute_program_inside_local, "voxel_y_res");
-	glUniform1ui(loc, static_cast<GLuint>(v.voxel_y_res));
-	loc = glGetUniformLocation(compute_program_inside_local, "voxel_z_res");
-	glUniform1ui(loc, static_cast<GLuint>(v.voxel_z_res));
+	loc = glGetUniformLocation(compute_program_inside, "voxel_res");
+	glUniform3i(loc, static_cast<int>(v.voxel_x_res), static_cast<int>(v.voxel_y_res), static_cast<int>(v.voxel_z_res));
 
-	// Dispatch inside compute
-	const GLuint local_size = 1;
-	glDispatchCompute(static_cast<GLuint>((x_res + local_size - 1) / local_size),
-		static_cast<GLuint>((y_res + local_size - 1) / local_size),
-		static_cast<GLuint>((z_res + local_size - 1) / local_size));
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	loc = glGetUniformLocation(compute_program_inside, "bg_grid_min");
+	glUniform3f(loc, x_grid_min, y_grid_min, z_grid_min);
 
-	// Bind additional SSBOs for surface compute
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_bg_surface_density_local);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_surface_counts_local);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, ssbo_surface_collisions_local);
+	loc = glGetUniformLocation(compute_program_inside, "bg_step");
+	glUniform3f(loc, x_step_size, y_step_size, z_step_size);
 
-	// Use surface program and set uniforms
-	glUseProgram(compute_program_surface_local);
+	loc = glGetUniformLocation(compute_program_inside, "bg_res");
+	glUniform3i(loc, static_cast<int>(x_res), static_cast<int>(y_res), static_cast<int>(z_res));
 
-	loc = glGetUniformLocation(compute_program_surface_local, "x_res");
-	glUniform1ui(loc, static_cast<GLuint>(x_res));
-	loc = glGetUniformLocation(compute_program_surface_local, "y_res");
-	glUniform1ui(loc, static_cast<GLuint>(y_res));
-	loc = glGetUniformLocation(compute_program_surface_local, "z_res");
-	glUniform1ui(loc, static_cast<GLuint>(z_res));
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_grid_cells);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_voxel_centres);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_bg_density);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_bg_collision);
 
-	// Dispatch surface compute
-	glDispatchCompute(static_cast<GLuint>((x_res + local_size - 1) / local_size),
-		static_cast<GLuint>((y_res + local_size - 1) / local_size),
-		static_cast<GLuint>((z_res + local_size - 1) / local_size));
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	const uint local_size = 5;
+	glDispatchCompute((static_cast<uint>(x_res) + local_size - 1) / local_size,
+		(static_cast<uint>(y_res) + local_size - 1) / local_size,
+		(static_cast<uint>(z_res) + local_size - 1) / local_size);
 
-	// Read back data
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_density_local);
-	float* bg_density_ptr = static_cast<float*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	std::copy(bg_density_ptr, bg_density_ptr + total, v.background_densities.begin());
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_collision_local);
-	int* bg_collision_ptr = static_cast<int*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	std::copy(bg_collision_ptr, bg_collision_ptr + total, v.background_collisions.begin());
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// Read back densities
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_density);
+	float* den_ptr = static_cast<float*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
+	if (den_ptr) {
+		v.background_densities.assign(den_ptr, den_ptr + (x_res * y_res * z_res));
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	}
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_surface_density_local);
-	float* bg_surface_density_ptr = static_cast<float*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	std::copy(bg_surface_density_ptr, bg_surface_density_ptr + total, v.background_surface_densities.begin());
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// Read back collisions
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_collision);
+	int* col_ptr = static_cast<int*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
+	if (col_ptr) {
+		v.background_collisions.assign(col_ptr, col_ptr + (x_res * y_res * z_res));
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	}
 
-	std::vector<int> counts(total);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_surface_counts_local);
-	int* counts_ptr = static_cast<int*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	std::copy(counts_ptr, counts_ptr + total, counts.begin());
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
+	static const int directions[6][3] = {
+		{1, 0, 0}, {-1, 0, 0},  // x directions
+		{0, 1, 0}, {0, -1, 0},  // y directions
+		{0, 0, 1}, {0, 0, -1}   // z directions
+	};
 
-	std::vector<int> surface_coll_flat(total * 6);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_surface_collisions_local);
-	int* surface_coll_ptr = static_cast<int*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	std::copy(surface_coll_ptr, surface_coll_ptr + total * 6, surface_coll_flat.begin());
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	// Initialize with the same grid size as background points
+	//const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
+	//const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
+	//const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
 
-	// Populate jagged surface collisions
-	for (size_t i = 0; i < total; ++i) {
-		for (int j = 0; j < counts[i]; ++j) {
-			v.background_surface_collisions[i].push_back(surface_coll_flat[i * 6 + j]);
+	// Clear any existing data
+	v.background_surface_indices.clear();
+	v.background_surface_indices.resize(x_res * y_res * z_res);
+	v.background_surface_centres.clear();
+	v.background_surface_centres.resize(x_res * y_res * z_res);
+	v.background_surface_densities.clear();
+	v.background_surface_densities.resize(x_res * y_res * z_res);
+	v.background_surface_collisions.clear();
+	v.background_surface_collisions.resize(x_res * y_res * z_res);
+
+	// Check each point in the background grid
+	for (size_t i = 0; i < v.background_centres.size(); i++)
+	{
+		// Skip points that are already inside the voxel grid
+		if (v.background_densities[i] > 0)
+			continue;
+
+		// Get the grid coordinates for this point
+		const int x = v.background_indices[i].x;
+		const int y = v.background_indices[i].y;
+		const int z = v.background_indices[i].z;
+
+		const size_t index = x + (y * x_res) + (z * x_res * y_res);
+
+		// Check all 6 adjacent neighbors
+
+		bool is_surface = false;
+
+		for (int dir = 0; dir < 6; dir++)
+		{
+			const int nx = x + directions[dir][0];
+			const int ny = y + directions[dir][1];
+			const int nz = z + directions[dir][2];
+
+			// Skip if neighbor is outside the grid
+			if (nx < 0 || nx >= static_cast<int>(x_res) ||
+				ny < 0 || ny >= static_cast<int>(y_res) ||
+				nz < 0 || nz >= static_cast<int>(z_res))
+			{
+				continue;
+			}
+
+			// Calculate the index of the neighboring point
+			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
+
+			// If the neighboring point is inside the voxel grid, this is a surface point
+			if (neighbor_index < v.background_densities.size() && v.background_densities[neighbor_index] > 0)
+			{
+				is_surface = true;
+
+				const int collision = v.background_collisions[neighbor_index];
+
+				v.background_surface_collisions[index].push_back(collision);
+			}
+		}
+
+
+		v.background_surface_indices[index] = v.background_indices[i];
+		v.background_surface_centres[index] = v.background_centres[i];
+
+		if (is_surface)
+		{
+			//cout << background_surface_collisions[index].size() << endl;
+			v.background_surface_densities[index] = 1.0;
+		}
+		else
+		{
+			v.background_surface_densities[index] = 0.0;
 		}
 	}
 
-	// Cleanup
-	glUseProgram(0);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	glDeleteProgram(compute_program_inside_local);
-	glDeleteProgram(compute_program_surface_local);
-
-	glDeleteBuffers(1, &ssbo_grid_cells_local);
-	glDeleteBuffers(1, &ssbo_voxel_centres_local);
-	glDeleteBuffers(1, &ssbo_bg_density_local);
-	glDeleteBuffers(1, &ssbo_bg_collision_local);
-	glDeleteBuffers(1, &ssbo_bg_surface_density_local);
-	glDeleteBuffers(1, &ssbo_surface_counts_local);
-	glDeleteBuffers(1, &ssbo_surface_collisions_local);
 }
-
 
 
 
@@ -1322,5 +1119,8 @@ void do_blackening(voxel_object& v)
 
 
 }
+
+
 #endif
+
 
