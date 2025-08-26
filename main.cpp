@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 #include "main.h"
 #include "shader_utils.h"
 
@@ -351,90 +342,6 @@ void take_screenshot(size_t num_cams_wide, const char* filename, const bool reve
     out.write(reinterpret_cast<char*>(&pixel_data[0]), num_bytes);
 }
 
-const char* compute_inside_source = R"(
-#version 430 core
-layout (local_size_x = 5, local_size_y = 5, local_size_z = 5) in;
-uniform mat4 inv_model;
-uniform vec3 vo_grid_min;
-uniform float cell_size;
-uniform ivec3 voxel_res;
-uniform vec3 bg_grid_min;
-uniform vec3 bg_step;
-uniform ivec3 bg_res;
-layout(std430, binding = 0) readonly buffer GridCells {
-  int grid_cells[];
-};
-layout(std430, binding = 1) readonly buffer VoxelCentres {
-  vec4 voxel_centres[];
-};
-layout(std430, binding = 2) buffer Densities {
-  float densities[];
-};
-layout(std430, binding = 3) buffer Collisions {
-  int collisions[];
-};
-void main() {
-  ivec3 gid = ivec3(gl_GlobalInvocationID);
-  if (gid.x >= bg_res.x || gid.y >= bg_res.y || gid.z >= bg_res.z) return;
-  int index = gid.x + gid.y * bg_res.x + gid.z * bg_res.x * bg_res.y;
-  vec3 pos = bg_grid_min + vec3(gid) * bg_step;
-  vec4 local_pos4 = inv_model * vec4(pos, 1.0);
-  vec3 local_pos = local_pos4.xyz;
-  ivec3 cell = ivec3( floor( (local_pos - vo_grid_min) / cell_size ) );
-  if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, voxel_res))) {
-    densities[index] = 0.0;
-    collisions[index] = -1;
-    return;
-  }
-  int cell_index = cell.x + cell.y * voxel_res.x + cell.z * voxel_res.x * voxel_res.y;
-  int vox_idx = grid_cells[cell_index];
-  if (vox_idx == -1) {
-    densities[index] = 0.0;
-    collisions[index] = -1;
-    return;
-  }
-  vec3 center = voxel_centres[vox_idx].xyz;
-  float half_size = cell_size * 0.5;
-  if (local_pos.x >= center.x - half_size && local_pos.x <= center.x + half_size &&
-      local_pos.y >= center.y - half_size && local_pos.y <= center.y + half_size &&
-      local_pos.z >= center.z - half_size && local_pos.z <= center.z + half_size) {
-    densities[index] = 1.0;
-    collisions[index] = vox_idx;
-  } else {
-    densities[index] = 0.0;
-    collisions[index] = -1;
-  }
-}
-)";
-
-GLuint createComputeShader(const char* source) {
-    GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(shader, 1, &source, NULL);
-    glCompileShader(shader);
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char log[1024];
-        glGetShaderInfoLog(shader, 1024, NULL, log);
-        cout << "Compute shader compile error: " << log << endl;
-        glDeleteShader(shader);
-        return 0;
-    }
-    GLuint program = glCreateProgram();
-    glAttachShader(program, shader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        char log[1024];
-        glGetProgramInfoLog(program, 1024, NULL, log);
-        cout << "Program link error: " << log << endl;
-        glDeleteProgram(program);
-        return 0;
-    }
-    glDeleteShader(shader);
-    return program;
-}
-
 int main(int argc, char** argv)
 {
 
@@ -469,35 +376,8 @@ int main(int argc, char** argv)
 
     vo.model_matrix = glm::mat4(1.0f);
     get_voxels("chr_knight.vox", vo);
-    //    do_blackening(vo);
+//    do_blackening(vo);
     get_triangles(vo.tri_vec, vo);
-
-    // Create compute program
-    compute_program_inside = createComputeShader(compute_inside_source);
-
-    // Create SSBOs
-    size_t total_vox = vo.voxel_x_res * vo.voxel_y_res * vo.voxel_z_res;
-    glGenBuffers(1, &ssbo_grid_cells);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_grid_cells);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, total_vox * sizeof(int), &vo.vo_grid_cells[0], GL_STATIC_DRAW);
-
-    vector<glm::vec4> centres_padded(total_vox);
-    for (size_t i = 0; i < total_vox; ++i) {
-        centres_padded[i] = glm::vec4(vo.voxel_centres[i].x, vo.voxel_centres[i].y, vo.voxel_centres[i].z, 0.0f);
-    }
-    glGenBuffers(1, &ssbo_voxel_centres);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_voxel_centres);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, total_vox * sizeof(glm::vec4), &centres_padded[0], GL_STATIC_DRAW);
-
-    size_t total_bg = x_res * y_res * z_res;
-    glGenBuffers(1, &ssbo_bg_density);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_density);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, total_bg * sizeof(float), NULL, GL_DYNAMIC_COPY);
-
-    glGenBuffers(1, &ssbo_bg_collision);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_collision);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, total_bg * sizeof(int), NULL, GL_DYNAMIC_COPY);
-
     get_background_points(vo);
 
 
@@ -510,7 +390,7 @@ int main(int argc, char** argv)
     glutMouseFunc(mouse_func);
     glutMotionFunc(motion_func);
     glutPassiveMotionFunc(passive_motion_func);
-    //    glutCloseFunc(cleanup);
+//    glutCloseFunc(cleanup);
 
     glutMainLoop();
 
@@ -634,27 +514,27 @@ void draw_objects(void)
 
 
 
-    if (draw_triangles_on_screen)
-    {
-        positions.clear();
-        colors.clear();
+	if (draw_triangles_on_screen)
+	{
+		positions.clear();
+		colors.clear();
 
-        for (const auto& tri : vo.tri_vec)
-        {
-            for (size_t j = 0; j < 3; ++j)
-            {
-                positions.push_back(tri.vertex[j]);
-                colors.push_back(tri.colour);
-            }
-        }
+		for (const auto& tri : vo.tri_vec)
+		{
+			for (size_t j = 0; j < 3; ++j)
+			{
+				positions.push_back(tri.vertex[j]);
+				colors.push_back(tri.colour);
+			}
+		}
 
-        //glm::mat4 model = glm::mat4(1.0f);
-        //model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
-        //model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
+		//glm::mat4 model = glm::mat4(1.0f);
+		//model = glm::rotate(model, u, glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::rotate(model, v, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        // Draw triangles
-        draw_triangles(positions, colors, vo.model_matrix);
-    }
+		// Draw triangles
+		draw_triangles(positions, colors, vo.model_matrix);
+	}
 
 
     // Optionally draw axes as lines
@@ -683,7 +563,7 @@ void draw_objects(void)
 
 
 
-
+ 
 
 
 void display_func(void)
@@ -732,11 +612,11 @@ void keyboard_func(unsigned char key, int x, int y)
         vo.model_matrix = glm::rotate(vo.model_matrix, vo.v, glm::vec3(1.0f, 0.0f, 0.0f));
 
 
-        std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
+		std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
         get_background_points(vo);
 
-        //  get_triangles(vo.tri_vec, vo);
+      //  get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -755,10 +635,10 @@ void keyboard_func(unsigned char key, int x, int y)
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-
+       
         get_background_points(vo);
 
-        // get_triangles(vo.tri_vec, vo);
+       // get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -776,10 +656,10 @@ void keyboard_func(unsigned char key, int x, int y)
 
         std::chrono::high_resolution_clock::time_point global_time_start = std::chrono::high_resolution_clock::now();
 
-
+     
         get_background_points(vo);
 
-        // get_triangles(vo.tri_vec, vo);
+       // get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -799,7 +679,7 @@ void keyboard_func(unsigned char key, int x, int y)
 
         get_background_points(vo);
 
-        //        get_triangles(vo.tri_vec, vo);
+//        get_triangles(vo.tri_vec, vo);
 
         std::chrono::high_resolution_clock::time_point global_time_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> elapsed = global_time_end - global_time_start;
@@ -873,7 +753,6 @@ void passive_motion_func(int x, int y)
 
 void cleanup(void)
 {
-
 
 
 
