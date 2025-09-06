@@ -31,10 +31,6 @@ using namespace std;
 
 
 
-GLuint compute_program_inside;
-GLuint ssbo_grid_cells, ssbo_voxel_centres, ssbo_bg_density, ssbo_bg_collision;
-
-
 // OpenGL 4 additions
 struct Vertex {
 	float position[3];
@@ -119,7 +115,7 @@ public:
 	// Note: when destroying a voxel, set voxel_densities[index] to 0 and vo_grid_cells[index] to -1
 	// then re-generate the triangles
 	vector<float> voxel_densities;
-	std::vector<int> vo_grid_cells;
+	std::vector<long long signed int> vo_grid_cells;
 
 
 
@@ -131,12 +127,12 @@ public:
 	vector<glm::ivec3> background_indices;
 	vector<custom_math::vertex_3> background_centres;
 	vector<float> background_densities;
-	vector<int> background_collisions;
+	vector<size_t> background_collisions;
 
 	vector<glm::ivec3> background_surface_indices;
 	vector<custom_math::vertex_3> background_surface_centres;
 	vector<float> background_surface_densities;
-	vector<vector<int>> background_surface_collisions;
+	vector<vector<size_t>> background_surface_collisions;
 
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 	float u = 0.0f, v = 0.0f;
@@ -159,7 +155,7 @@ public:
 	// Find which voxel contains a point
 	bool find_voxel_containing_point(
 		const custom_math::vertex_3& point,
-		size_t& voxel_index) const
+		size_t& voxel_index) const 
 	{
 		// Get grid cell coordinates
 		int cell_x = static_cast<int>((point.x - vo_grid_min.x) / cell_size);
@@ -176,7 +172,7 @@ public:
 		// Find the index in the flattened 3D array
 		size_t cell_index = cell_x + (cell_y * voxel_x_res) + (cell_z * voxel_x_res * voxel_y_res);
 
-		int voxel_idx = vo_grid_cells[cell_index];
+		long long signed int voxel_idx = vo_grid_cells[cell_index];
 
 		if (voxel_idx == -1)
 			return false;  // No voxel here
@@ -227,6 +223,8 @@ public:
 
 
 };
+
+
 
 
 
@@ -286,7 +284,7 @@ voxel_object vo;
 
 
 
-void centre_voxels_on_xyz(voxel_object& v)
+void centre_voxels_on_xyz(voxel_object &v)
 {
 	float x_min = numeric_limits<float>::max();
 	float y_min = numeric_limits<float>::max();
@@ -726,6 +724,7 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 
 
 
+
 	for (size_t i = 0; i < tri_vec.size(); i++)
 	{
 		static const float pi = 4.0f * atanf(1.0f);
@@ -757,7 +756,8 @@ bool get_triangles(vector<custom_math::triangle>& tri_vec, voxel_object& v)
 //	x = remainder % x_res;
 //}
 
-void get_background_points_cpu(voxel_object& v)
+
+void get_background_points(voxel_object& v)
 {
 	float x_grid_min = -x_grid_max;
 	float y_grid_min = -y_grid_max;
@@ -894,199 +894,17 @@ void get_background_points_cpu(voxel_object& v)
 
 
 
-
-
-
-void get_background_points(voxel_object& v)
-{
-	float x_grid_min = -x_grid_max;
-	float y_grid_min = -y_grid_max;
-	float z_grid_min = -z_grid_max;
-
-	v.background_indices.resize(x_res * y_res * z_res);
-	v.background_centres.resize(x_res * y_res * z_res);
-	v.background_densities.resize(x_res * y_res * z_res);
-	v.background_collisions.resize(x_res * y_res * z_res, -1);
-
-	const float x_step_size = (x_grid_max - x_grid_min) / (x_res - 1);
-	const float y_step_size = (y_grid_max - y_grid_min) / (y_res - 1);
-	const float z_step_size = (z_grid_max - z_grid_min) / (z_res - 1);
-
-	custom_math::vertex_3 Z(x_grid_min, y_grid_min, z_grid_min);
-
-	for (size_t z = 0; z < z_res; z++, Z.z += z_step_size)
-	{
-		Z.x = x_grid_min;
-
-		for (size_t x = 0; x < x_res; x++, Z.x += x_step_size)
-		{
-			Z.y = y_grid_min;
-
-			for (size_t y = 0; y < y_res; y++, Z.y += y_step_size)
-			{
-				const custom_math::vertex_3 test_point(Z.x, Z.y, Z.z);
-
-				const size_t index = x + (y * x_res) + (z * x_res * y_res);
-
-				v.background_centres[index] = test_point;
-				v.background_indices[index] = glm::ivec3(x, y, z);
-			}
-		}
-	}
-
-	// GPU part for densities and collisions
-	glm::mat4 inv_model = glm::inverse(v.model_matrix);
-
-	glUseProgram(compute_program_inside);
-
-	GLint loc = glGetUniformLocation(compute_program_inside, "inv_model");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(inv_model));
-
-	loc = glGetUniformLocation(compute_program_inside, "vo_grid_min");
-	glUniform3f(loc, v.vo_grid_min.x, v.vo_grid_min.y, v.vo_grid_min.z);
-
-	loc = glGetUniformLocation(compute_program_inside, "cell_size");
-	glUniform1f(loc, v.cell_size);
-
-	loc = glGetUniformLocation(compute_program_inside, "voxel_res");
-	glUniform3i(loc, static_cast<int>(v.voxel_x_res), static_cast<int>(v.voxel_y_res), static_cast<int>(v.voxel_z_res));
-
-	loc = glGetUniformLocation(compute_program_inside, "bg_grid_min");
-	glUniform3f(loc, x_grid_min, y_grid_min, z_grid_min);
-
-	loc = glGetUniformLocation(compute_program_inside, "bg_step");
-	glUniform3f(loc, x_step_size, y_step_size, z_step_size);
-
-	loc = glGetUniformLocation(compute_program_inside, "bg_res");
-	glUniform3i(loc, static_cast<int>(x_res), static_cast<int>(y_res), static_cast<int>(z_res));
-
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_grid_cells);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_voxel_centres);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_bg_density);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_bg_collision);
-
-	const uint local_size = 5;
-	glDispatchCompute((static_cast<uint>(x_res) + local_size - 1) / local_size,
-		(static_cast<uint>(y_res) + local_size - 1) / local_size,
-		(static_cast<uint>(z_res) + local_size - 1) / local_size);
-
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
-
-	// Read back densities
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_density);
-	float* den_ptr = static_cast<float*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	if (den_ptr) {
-		v.background_densities.assign(den_ptr, den_ptr + (x_res * y_res * z_res));
-		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	}
-
-	// Read back collisions
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_bg_collision);
-	int* col_ptr = static_cast<int*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
-	if (col_ptr) {
-		v.background_collisions.assign(col_ptr, col_ptr + (x_res * y_res * z_res));
-		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	}
-
-	// Define the coordinates for 6 adjacent neighbors (up, down, left, right, front, back)
-	static const int directions[6][3] = {
-		{1, 0, 0}, {-1, 0, 0},  // x directions
-		{0, 1, 0}, {0, -1, 0},  // y directions
-		{0, 0, 1}, {0, 0, -1}   // z directions
-	};
-
-	// Initialize with the same grid size as background points
-	//const size_t x_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].x + 1;
-	//const size_t y_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].y + 1;
-	//const size_t z_res = background_indices.empty() ? 0 : background_indices[background_indices.size() - 1].z + 1;
-
-	// Clear any existing data
-	v.background_surface_indices.clear();
-	v.background_surface_indices.resize(x_res * y_res * z_res);
-	v.background_surface_centres.clear();
-	v.background_surface_centres.resize(x_res * y_res * z_res);
-	v.background_surface_densities.clear();
-	v.background_surface_densities.resize(x_res * y_res * z_res);
-	v.background_surface_collisions.clear();
-	v.background_surface_collisions.resize(x_res * y_res * z_res);
-
-	// Check each point in the background grid
-	for (size_t i = 0; i < v.background_centres.size(); i++)
-	{
-		// Skip points that are already inside the voxel grid
-		if (v.background_densities[i] > 0)
-			continue;
-
-		// Get the grid coordinates for this point
-		const int x = v.background_indices[i].x;
-		const int y = v.background_indices[i].y;
-		const int z = v.background_indices[i].z;
-
-		const size_t index = x + (y * x_res) + (z * x_res * y_res);
-
-		// Check all 6 adjacent neighbors
-
-		bool is_surface = false;
-
-		for (int dir = 0; dir < 6; dir++)
-		{
-			const int nx = x + directions[dir][0];
-			const int ny = y + directions[dir][1];
-			const int nz = z + directions[dir][2];
-
-			// Skip if neighbor is outside the grid
-			if (nx < 0 || nx >= static_cast<int>(x_res) ||
-				ny < 0 || ny >= static_cast<int>(y_res) ||
-				nz < 0 || nz >= static_cast<int>(z_res))
-			{
-				continue;
-			}
-
-			// Calculate the index of the neighboring point
-			size_t neighbor_index = nx + (ny * x_res) + (nz * x_res * y_res);
-
-			// If the neighboring point is inside the voxel grid, this is a surface point
-			if (neighbor_index < v.background_densities.size() && v.background_densities[neighbor_index] > 0)
-			{
-				is_surface = true;
-
-				const int collision = v.background_collisions[neighbor_index];
-
-				v.background_surface_collisions[index].push_back(collision);
-			}
-		}
-
-
-		v.background_surface_indices[index] = v.background_indices[i];
-		v.background_surface_centres[index] = v.background_centres[i];
-
-		if (is_surface)
-		{
-			//cout << background_surface_collisions[index].size() << endl;
-			v.background_surface_densities[index] = 1.0;
-		}
-		else
-		{
-			v.background_surface_densities[index] = 0.0;
-		}
-	}
-
-
-}
-
-
-
 void get_surface_points(void)
 {
 
 
-	//	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
+//	std::cout << "Found " << background_surface_centres.size() << " surface points" << std::endl;
 }
 
 
 
 
-void do_blackening(voxel_object& v)
+void do_blackening(voxel_object &v)
 {
 	for (size_t x = 0; x < x_res; x++)
 	{
@@ -1121,6 +939,5 @@ void do_blackening(voxel_object& v)
 }
 
 
+
 #endif
-
-
